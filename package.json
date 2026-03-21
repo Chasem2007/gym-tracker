@@ -24,3 +24,8 @@
     "eslint-config-next": "^14.0.0"
   }
 }
+```
+
+The key is this line:
+```
+"build": "next build",
