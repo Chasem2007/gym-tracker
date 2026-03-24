@@ -12,7 +12,7 @@ async function loadCalorieData() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Load saved calorie goal from user_settings
-  const { data: profile } = await supabase
+  const { data: profile } = await db
     .from('user_settings')
     .select('calorie_goal')
     .eq('user_id', currentUser.user_id)
@@ -23,7 +23,7 @@ async function loadCalorieData() {
   document.getElementById('calorieGoalDisplay').textContent = goal;
 
   // Load today's food entries
-  const { data } = await supabase
+  const { data } = await db
     .from('calories')
     .select('*')
     .eq('user_id', currentUser.user_id)
@@ -70,7 +70,7 @@ async function saveCalorieEntry() {
 
   if (!calories) { showToast('Enter calories', 'error'); return; }
 
-  await supabase.from('calories').insert({
+  await db.from('calories').insert({
     user_id: currentUser.user_id,
     date, food_name, calories, protein
   });
@@ -85,7 +85,7 @@ async function saveCalorieEntry() {
 // Saves the daily calorie goal to user_settings
 async function saveCalorieGoal() {
   const goal = parseInt(document.getElementById('calorieGoal').value) || 2500;
-  await supabase.from('user_settings').upsert(
+  await db.from('user_settings').upsert(
     { user_id: currentUser.user_id, calorie_goal: goal },
     { onConflict: 'user_id' }
   );
@@ -94,7 +94,7 @@ async function saveCalorieGoal() {
 }
 
 async function deleteCalorie(id) {
-  await supabase.from('calories').delete().eq('id', id);
+  await db.from('calories').delete().eq('id', id);
   showToast('Deleted');
   loadCalorieData();
 }

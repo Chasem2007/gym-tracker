@@ -16,7 +16,7 @@ async function saveWeight() {
 
   if (!weight) { showToast('Enter a weight', 'error'); return; }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('body_weight')
     .upsert(
       { user_id: currentUser.user_id, date, weight },
@@ -31,7 +31,7 @@ async function saveWeight() {
 
 // Loads weight data and renders the chart + table
 async function loadWeightData() {
-  const { data } = await supabase
+  const { data } = await db
     .from('body_weight')
     .select('*')
     .eq('user_id', currentUser.user_id)
@@ -86,7 +86,7 @@ async function loadWeightData() {
 }
 
 async function deleteWeight(id) {
-  await supabase.from('body_weight').delete().eq('id', id);
+  await db.from('body_weight').delete().eq('id', id);
   showToast('Deleted');
   loadWeightData();
 }

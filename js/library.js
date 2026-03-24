@@ -14,14 +14,14 @@ let libraryFilter = 'all';  // Current filter tab
 // Fetches exercises from Supabase.
 // If the table is empty, inserts the defaults first.
 async function getExerciseLibrary() {
-  const { data } = await supabase
+  const { data } = await db
     .from('exercise_library')
     .select('*')
     .order('name');
 
   if (!data || !data.length) {
     // Table is empty — seed it with defaults
-    await supabase.from('exercise_library').insert(
+    await db.from('exercise_library').insert(
       DEFAULT_EXERCISES.map(ex => ({
         name: ex.name,
         muscles: ex.muscles,
@@ -30,7 +30,7 @@ async function getExerciseLibrary() {
         created_by: currentUser.user_id
       }))
     );
-    const { data: seeded } = await supabase
+    const { data: seeded } = await db
       .from('exercise_library')
       .select('*')
       .order('name');
@@ -127,7 +127,7 @@ async function saveNewExercise() {
 
   if (!name) { showToast('Enter an exercise name', 'error'); return; }
 
-  await supabase.from('exercise_library').insert({
+  await db.from('exercise_library').insert({
     name, category, equipment, muscles,
     created_by: currentUser.user_id
   });

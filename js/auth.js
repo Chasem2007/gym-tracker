@@ -25,7 +25,7 @@ async function handleLogin() {
 
   try {
     // Ask Supabase: "Is there a user with this username AND password?"
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('users')
       .select('*')
       .eq('username', u)
@@ -33,8 +33,11 @@ async function handleLogin() {
       .single();  // .single() = expect exactly 1 result
 
     if (error || !data) {
-      err.textContent = 'Invalid username or password.';
+      // Show the actual Supabase error so we can debug
+      const detail = error ? error.message || error.code || JSON.stringify(error) : 'No user found';
+      err.textContent = 'Login failed: ' + detail;
       err.style.display = 'block';
+      console.error('Supabase login error:', error);
       return;
     }
 
@@ -43,8 +46,9 @@ async function handleLogin() {
     localStorage.setItem('ironlog_session', JSON.stringify(data));
     enterApp();
   } catch (e) {
-    err.textContent = 'Connection error. Check your Supabase config.';
+    err.textContent = 'Connection error: ' + (e.message || e);
     err.style.display = 'block';
+    console.error('Connection error:', e);
   }
 }
 

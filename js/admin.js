@@ -9,7 +9,7 @@
 */
 
 async function loadMembers() {
-  const { data } = await supabase
+  const { data } = await db
     .from('users')
     .select('*')
     .order('created_at', { ascending: true });
@@ -85,7 +85,7 @@ async function saveNewMember() {
   // so even if they change their username later, nothing breaks.
   const user_id = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-  const { error } = await supabase.from('users').insert({
+  const { error } = await db.from('users').insert({
     user_id, username, password,
     display_name: display_name || username,
     role
@@ -103,7 +103,7 @@ async function saveNewMember() {
 
 async function deleteMember(userId, username) {
   if (!confirm(`Remove @${username}? This won't delete their workout data.`)) return;
-  await supabase.from('users').delete().eq('user_id', userId);
+  await db.from('users').delete().eq('user_id', userId);
   showToast('Removed');
   loadMembers();
 }

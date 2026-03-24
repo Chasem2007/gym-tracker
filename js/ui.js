@@ -41,6 +41,9 @@ function showPage(id) {
   if (id === 'calories') loadCalorieData();
   if (id === 'history') loadHistory();
   if (id === 'admin') loadMembers();
+  if (id === 'water') loadWaterData();
+  if (id === 'analytics') loadAnalytics();
+  if (id === 'gympass') loadGymPassData();
 }
 
 // Toggles the sidebar open/closed on mobile

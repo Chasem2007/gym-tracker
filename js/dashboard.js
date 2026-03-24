@@ -20,7 +20,7 @@ async function loadDashboard() {
   const todayStr = now.toISOString().split('T')[0];
 
   // --- Fetch this week's workouts ---
-  const { data: workouts } = await supabase
+  const { data: workouts } = await db
     .from('workouts')
     .select('*')
     .eq('user_id', uid)
@@ -53,7 +53,7 @@ async function loadDashboard() {
   document.getElementById('statVolume').textContent = totalVol.toLocaleString();
 
   // --- Latest body weight ---
-  const { data: wd } = await supabase
+  const { data: wd } = await db
     .from('body_weight')
     .select('weight')
     .eq('user_id', uid)
@@ -62,7 +62,7 @@ async function loadDashboard() {
   document.getElementById('statWeight').textContent = wd && wd.length ? wd[0].weight : '—';
 
   // --- Today's total calories ---
-  const { data: cd } = await supabase
+  const { data: cd } = await db
     .from('calories')
     .select('calories')
     .eq('user_id', uid)

@@ -15,8 +15,12 @@ let currentExercises = [];
 // Opens a modal showing all exercises to pick from
 async function openExercisePicker() {
   const exercises = await getExerciseLibrary();
-  const html = exercises.map(ex => `
-    <div class="library-card" style="cursor:pointer;padding:12px;" onclick="addExerciseToWorkout('${ex.name.replace(/'/g, "\\'")}','${JSON.stringify(ex.muscles || []).replace(/'/g, "\\'")}')">
+  
+  // Store exercises in a temporary global so we can look them up by index
+  window._pickerExercises = exercises;
+  
+  const html = exercises.map((ex, idx) => `
+    <div class="library-card exercise-pick-item" style="cursor:pointer;padding:12px;" data-idx="${idx}">
       <div style="font-weight:600;font-size:14px;">${ex.name}</div>
       <div style="font-size:11px;color:var(--text-muted);">${ex.equipment || ''} — ${(ex.muscles || []).join(', ')}</div>
     </div>`).join('');
@@ -29,6 +33,16 @@ async function openExercisePicker() {
         <div id="exPickerList" style="max-height:400px;overflow-y:auto;">${html}</div>
       </div>
     </div>`;
+  
+  // Use event delegation — one click listener on the list container
+  // that catches clicks on any exercise card inside it
+  document.getElementById('exPickerList').addEventListener('click', function(e) {
+    const card = e.target.closest('.exercise-pick-item');
+    if (!card) return;
+    const idx = parseInt(card.dataset.idx);
+    const ex = window._pickerExercises[idx];
+    if (ex) addExerciseToWorkout(ex.name, ex.muscles || []);
+  });
 }
 
 // Filters the exercise picker modal as you type
@@ -40,15 +54,12 @@ function filterExPicker(query) {
 }
 
 // Adds a selected exercise to the current workout
-function addExerciseToWorkout(name, musclesJson) {
+function addExerciseToWorkout(name, muscles) {
   closeModal();
-  let muscles = [];
-  try { muscles = JSON.parse(musclesJson); } catch (e) {}
-
   currentExercises.push({
     id: Date.now(),  // simple unique ID
     name,
-    muscles,
+    muscles: muscles || [],
     sets: [{ weight: '', reps: '' }]  // start with one empty set
   });
   renderExerciseList();
@@ -124,7 +135,7 @@ async function saveWorkout() {
     return;
   }
 
-  const { error } = await supabase.from('workouts').insert({
+  const { error } = await db.from('workouts').insert({
     user_id: currentUser.user_id,
     date: document.getElementById('workoutDate').value,
     name: document.getElementById('workoutName').value.trim() || 'Workout',

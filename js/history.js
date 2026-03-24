@@ -8,7 +8,7 @@
 */
 
 async function loadHistory() {
-  const { data } = await supabase
+  const { data } = await db
     .from('workouts')
     .select('*')
     .eq('user_id', currentUser.user_id)
@@ -63,7 +63,7 @@ async function loadHistory() {
 
 async function deleteWorkout(id) {
   if (!confirm('Delete this workout?')) return;
-  await supabase.from('workouts').delete().eq('id', id);
+  await db.from('workouts').delete().eq('id', id);
   showToast('Deleted');
   loadHistory();
 }
