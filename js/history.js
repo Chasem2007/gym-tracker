@@ -166,6 +166,7 @@ function renderEditForm() {
       </div>
       ${exercisesHtml}
       ${data.exercises.length === 0 ? '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">No exercises — add one above</div>' : ''}
+      ${data.exercises.length > 0 ? '<button class="btn btn-secondary w-full" onclick="editAddExercise()" style="justify-content:center;margin-top:8px;">+ Add Another Exercise</button>' : ''}
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button class="btn btn-primary" onclick="saveEditWorkout()" style="flex:1;justify-content:center;">Save Changes</button>
         <button class="btn btn-ghost" onclick="cancelEditWorkout()">Cancel</button>

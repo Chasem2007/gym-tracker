@@ -121,15 +121,19 @@ function renderExerciseList() {
 
   if (!currentExercises.length) {
     container.innerHTML = '<div class="empty-state"><p>Add exercises to start building your workout</p></div>';
-    // Hide discard button when nothing to discard
+    // Hide discard and bottom add buttons when nothing to discard
     const discardBtn = document.getElementById('discardWorkoutBtn');
     if (discardBtn) discardBtn.style.display = 'none';
+    const bottomAdd = document.getElementById('bottomAddExercise');
+    if (bottomAdd) bottomAdd.style.display = 'none';
     return;
   }
 
-  // Show discard button when there's a workout in progress
+  // Show discard and bottom add buttons when there's a workout in progress
   const discardBtn = document.getElementById('discardWorkoutBtn');
   if (discardBtn) discardBtn.style.display = 'inline-flex';
+  const bottomAdd = document.getElementById('bottomAddExercise');
+  if (bottomAdd) bottomAdd.style.display = 'block';
 
   container.innerHTML = currentExercises.map((ex, exIdx) => {
     const setsHtml = ex.sets.map((s, setIdx) => `
