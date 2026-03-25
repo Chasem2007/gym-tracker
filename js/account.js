@@ -152,18 +152,42 @@ async function saveAccountBarcode() {
 
 // ===== FIRST-TIME SETUP WIZARD =====
 
-// Called after login — checks if user needs initial setup
+// Called after login — checks if user needs initial setup.
+// Uses BOTH Supabase and localStorage to track completion,
+// so even if the DB column is missing it won't keep popping up.
 async function checkFirstTimeSetup() {
   if (!currentUser) return;
 
-  // Check if setup is already complete
-  const { data } = await db
-    .from('user_settings')
-    .select('setup_complete')
-    .eq('user_id', currentUser.user_id)
-    .single();
+  // Check localStorage first (instant, no network needed)
+  const localKey = 'ironlog_setup_done_' + currentUser.user_id;
+  if (localStorage.getItem(localKey) === 'true') return;
 
-  if (data && data.setup_complete) return;  // Already set up
+  // Then check Supabase
+  try {
+    const { data, error } = await db
+      .from('user_settings')
+      .select('setup_complete')
+      .eq('user_id', currentUser.user_id)
+      .maybeSingle();  // maybeSingle = returns null instead of error if no row
+
+    if (data && data.setup_complete) {
+      // Already done — save to localStorage so we don't check again
+      localStorage.setItem(localKey, 'true');
+      return;
+    }
+
+    // If error (like column doesn't exist), don't show wizard — just skip
+    if (error) {
+      console.warn('Setup check error:', error.message);
+      localStorage.setItem(localKey, 'true');
+      return;
+    }
+  } catch (e) {
+    // Network error or column missing — skip the wizard
+    console.warn('Setup check failed:', e);
+    localStorage.setItem(localKey, 'true');
+    return;
+  }
 
   // Show the setup wizard
   showSetupWizard();
@@ -269,6 +293,8 @@ async function completeSetup() {
 
   // Close the wizard
   document.getElementById('setupOverlay').style.display = 'none';
+  // Mark as done in localStorage too so it never shows again
+  localStorage.setItem('ironlog_setup_done_' + currentUser.user_id, 'true');
   showToast('Welcome to IRONLOG! 💪');
   loadDashboard();
 }
