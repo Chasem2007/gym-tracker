@@ -48,28 +48,106 @@ const DEFAULT_EXERCISES = [
 ];
 
 /*
-  MUSCLE MAP SVG
-  A simplified body outline. Each shape has an ID like
-  "muscle-chest-l" so JavaScript can find it and change
-  its color class based on which muscles you've trained.
+  MUSCLE MAP SVG — Front and back anatomical view
+  Based on the detailed muscle diagram. Each muscle
+  group has a unique ID so JavaScript can color it
+  based on workout data. Front view on left, back
+  view on right.
 */
-const MUSCLE_MAP_SVG = `<svg viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
-  <ellipse cx="100" cy="30" rx="18" ry="22" fill="#2a2a3e" opacity="0.3" stroke="#3a3a50" stroke-width="0.5"/>
-  <rect x="92" y="50" width="16" height="14" rx="4" fill="#2a2a3e" opacity="0.3"/>
-  <ellipse id="muscle-shoulders-l" cx="62" cy="72" rx="20" ry="10" class="muscle-none"/>
-  <ellipse id="muscle-shoulders-r" cx="138" cy="72" rx="20" ry="10" class="muscle-none"/>
-  <ellipse id="muscle-chest-l" cx="76" cy="95" rx="22" ry="16" class="muscle-none"/>
-  <ellipse id="muscle-chest-r" cx="124" cy="95" rx="22" ry="16" class="muscle-none"/>
-  <rect id="muscle-core" x="82" y="112" width="36" height="50" rx="8" class="muscle-none"/>
-  <rect id="muscle-back" x="78" y="80" width="44" height="34" rx="6" class="muscle-none" opacity="0.2"/>
-  <ellipse id="muscle-arms-l" cx="44" cy="110" rx="10" ry="26" class="muscle-none"/>
-  <ellipse id="muscle-arms-r" cx="156" cy="110" rx="10" ry="26" class="muscle-none"/>
-  <ellipse cx="38" cy="150" rx="7" ry="20" fill="#2a2a3e" opacity="0.25"/>
-  <ellipse cx="162" cy="150" rx="7" ry="20" fill="#2a2a3e" opacity="0.25"/>
-  <ellipse id="muscle-legs-l" cx="82" cy="210" rx="18" ry="48" class="muscle-none"/>
-  <ellipse id="muscle-legs-r" cx="118" cy="210" rx="18" ry="48" class="muscle-none"/>
-  <ellipse cx="80" cy="300" rx="12" ry="36" fill="#2a2a3e" opacity="0.25"/>
-  <ellipse cx="120" cy="300" rx="12" ry="36" fill="#2a2a3e" opacity="0.25"/>
-  <ellipse cx="78" cy="345" rx="14" ry="6" fill="#2a2a3e" opacity="0.2"/>
-  <ellipse cx="122" cy="345" rx="14" ry="6" fill="#2a2a3e" opacity="0.2"/>
+const MUSCLE_MAP_SVG = `<svg viewBox="0 0 420 440" xmlns="http://www.w3.org/2000/svg">
+  <!-- ===== FRONT VIEW (left side) ===== -->
+  <g transform="translate(10,10)">
+    <!-- Head -->
+    <ellipse cx="95" cy="18" rx="16" ry="20" fill="#2a2a3e" opacity="0.3" stroke="#3a3a50" stroke-width="0.8"/>
+    <!-- Neck / Traps -->
+    <path d="M82,36 L68,52 L122,52 L108,36 Z" fill="#2a2a3e" opacity="0.25" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Shoulders (front delts) -->
+    <path id="muscle-shoulders-fl" d="M55,52 Q42,58 38,75 Q42,82 55,78 Q62,70 62,58 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <path id="muscle-shoulders-fr" d="M135,52 Q148,58 152,75 Q148,82 135,78 Q128,70 128,58 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Chest (pectorals) -->
+    <path id="muscle-chest-l" d="M62,58 L62,78 Q65,95 78,100 Q90,102 95,95 L95,58 Q85,52 62,58 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <path id="muscle-chest-r" d="M128,58 L128,78 Q125,95 112,100 Q100,102 95,95 L95,58 Q105,52 128,58 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Biceps -->
+    <path id="muscle-arms-fl" d="M38,78 Q32,95 30,115 Q28,132 32,145 Q38,148 44,140 Q48,125 48,105 Q48,88 42,78 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <path id="muscle-arms-fr" d="M152,78 Q158,95 160,115 Q162,132 158,145 Q152,148 146,140 Q142,125 142,105 Q142,88 148,78 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Forearms -->
+    <path d="M30,145 Q26,170 28,195 Q32,200 36,195 Q40,175 44,145 Z" fill="#2a2a3e" opacity="0.2" stroke="#3a3a50" stroke-width="0.4"/>
+    <path d="M160,145 Q164,170 162,195 Q158,200 154,195 Q150,175 146,145 Z" fill="#2a2a3e" opacity="0.2" stroke="#3a3a50" stroke-width="0.4"/>
+    
+    <!-- Abs / Core -->
+    <path id="muscle-core-f" d="M80,100 Q78,120 78,145 Q78,165 82,175 L95,178 L108,175 Q112,165 112,145 Q112,120 110,100 Q100,105 80,100 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <!-- Ab lines -->
+    <line x1="95" y1="105" x2="95" y2="175" stroke="#3a3a50" stroke-width="0.4" opacity="0.5"/>
+    <line x1="80" y1="115" x2="110" y2="115" stroke="#3a3a50" stroke-width="0.3" opacity="0.4"/>
+    <line x1="80" y1="130" x2="110" y2="130" stroke="#3a3a50" stroke-width="0.3" opacity="0.4"/>
+    <line x1="80" y1="145" x2="110" y2="145" stroke="#3a3a50" stroke-width="0.3" opacity="0.4"/>
+    <line x1="82" y1="160" x2="108" y2="160" stroke="#3a3a50" stroke-width="0.3" opacity="0.4"/>
+    
+    <!-- Quads -->
+    <path id="muscle-legs-fl" d="M78,178 Q72,210 68,250 Q66,275 70,300 Q78,310 86,305 Q92,285 95,260 Q95,220 88,178 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <path id="muscle-legs-fr" d="M112,178 Q118,210 122,250 Q124,275 120,300 Q112,310 104,305 Q98,285 95,260 Q95,220 102,178 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Calves (front) -->
+    <path d="M70,310 Q68,340 70,370 Q74,385 80,380 Q84,360 86,340 Q86,320 82,310 Z" fill="#2a2a3e" opacity="0.2" stroke="#3a3a50" stroke-width="0.4"/>
+    <path d="M120,310 Q122,340 120,370 Q116,385 110,380 Q106,360 104,340 Q104,320 108,310 Z" fill="#2a2a3e" opacity="0.2" stroke="#3a3a50" stroke-width="0.4"/>
+    
+    <!-- Feet -->
+    <ellipse cx="76" cy="395" rx="12" ry="5" fill="#2a2a3e" opacity="0.15"/>
+    <ellipse cx="114" cy="395" rx="12" ry="5" fill="#2a2a3e" opacity="0.15"/>
+    
+    <!-- Label -->
+    <text x="95" y="420" text-anchor="middle" fill="#4a4a62" font-size="10" font-family="Oswald,sans-serif" letter-spacing="2">FRONT</text>
+  </g>
+  
+  <!-- ===== BACK VIEW (right side) ===== -->
+  <g transform="translate(220,10)">
+    <!-- Head -->
+    <ellipse cx="95" cy="18" rx="16" ry="20" fill="#2a2a3e" opacity="0.3" stroke="#3a3a50" stroke-width="0.8"/>
+    <!-- Neck / Traps -->
+    <path d="M82,36 L68,52 L122,52 L108,36 Z" fill="#2a2a3e" opacity="0.25" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Rear Delts / Shoulders -->
+    <path id="muscle-shoulders-bl" d="M55,52 Q42,58 38,75 Q42,82 55,78 Q62,70 62,58 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <path id="muscle-shoulders-br" d="M135,52 Q148,58 152,75 Q148,82 135,78 Q128,70 128,58 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Upper Back / Lats -->
+    <path id="muscle-back-l" d="M62,58 Q58,75 60,100 Q65,115 78,120 L95,115 L95,58 Q85,52 62,58 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <path id="muscle-back-r" d="M128,58 Q132,75 130,100 Q125,115 112,120 L95,115 L95,58 Q105,52 128,58 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <!-- Spine line -->
+    <line x1="95" y1="55" x2="95" y2="175" stroke="#3a3a50" stroke-width="0.5" opacity="0.4"/>
+    
+    <!-- Triceps -->
+    <path id="muscle-arms-bl" d="M38,78 Q32,95 30,115 Q28,132 32,145 Q38,148 44,140 Q48,125 48,105 Q48,88 42,78 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <path id="muscle-arms-br" d="M152,78 Q158,95 160,115 Q162,132 158,145 Q152,148 146,140 Q142,125 142,105 Q142,88 148,78 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Forearms -->
+    <path d="M30,145 Q26,170 28,195 Q32,200 36,195 Q40,175 44,145 Z" fill="#2a2a3e" opacity="0.2" stroke="#3a3a50" stroke-width="0.4"/>
+    <path d="M160,145 Q164,170 162,195 Q158,200 154,195 Q150,175 146,145 Z" fill="#2a2a3e" opacity="0.2" stroke="#3a3a50" stroke-width="0.4"/>
+    
+    <!-- Lower Back / Core back -->
+    <path id="muscle-core-b" d="M78,120 Q76,140 78,165 Q80,175 95,178 Q110,175 112,165 Q114,140 112,120 Q100,125 78,120 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5" opacity="0.6"/>
+    
+    <!-- Glutes -->
+    <path id="muscle-legs-gl" d="M78,178 Q72,185 70,200 Q72,215 82,218 L95,215 L95,178 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <path id="muscle-legs-gr" d="M112,178 Q118,185 120,200 Q118,215 108,218 L95,215 L95,178 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Hamstrings -->
+    <path id="muscle-legs-bl" d="M70,218 Q68,250 68,280 Q70,305 78,310 Q86,308 88,295 Q90,270 88,240 Q86,218 82,218 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    <path id="muscle-legs-br" d="M120,218 Q122,250 122,280 Q120,305 112,310 Q104,308 102,295 Q100,270 102,240 Q104,218 108,218 Z" class="muscle-none" stroke="#3a3a50" stroke-width="0.5"/>
+    
+    <!-- Calves (back) -->
+    <path d="M70,310 Q66,330 65,350 Q66,375 74,385 Q80,382 84,365 Q86,345 86,325 Q84,312 78,310 Z" fill="#2a2a3e" opacity="0.2" stroke="#3a3a50" stroke-width="0.4"/>
+    <path d="M120,310 Q124,330 125,350 Q124,375 116,385 Q110,382 106,365 Q104,345 104,325 Q106,312 112,310 Z" fill="#2a2a3e" opacity="0.2" stroke="#3a3a50" stroke-width="0.4"/>
+    
+    <!-- Feet -->
+    <ellipse cx="76" cy="395" rx="12" ry="5" fill="#2a2a3e" opacity="0.15"/>
+    <ellipse cx="114" cy="395" rx="12" ry="5" fill="#2a2a3e" opacity="0.15"/>
+    
+    <!-- Label -->
+    <text x="95" y="420" text-anchor="middle" fill="#4a4a62" font-size="10" font-family="Oswald,sans-serif" letter-spacing="2">BACK</text>
+  </g>
 </svg>`;

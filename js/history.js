@@ -123,12 +123,12 @@ function renderEditForm() {
       </div>
     `).join('');
 
-    return `<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-weight:600;font-size:13px;">${ex.name}</span>
-        <div style="display:flex;gap:4px;">
-          <button class="btn btn-ghost btn-sm" onclick="editAddSet(${exIdx})">+ Set</button>
-          <button class="btn btn-danger btn-sm" onclick="editRemoveExercise(${exIdx})">×</button>
+    return `<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;overflow:hidden;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px;">
+        <span style="font-weight:600;font-size:13px;min-width:0;word-break:break-word;">${ex.name}</span>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button class="btn btn-ghost btn-sm" onclick="editAddSet(${exIdx})" style="padding:5px 10px;">+ Set</button>
+          <button class="btn btn-danger btn-sm" onclick="editRemoveExercise(${exIdx})" style="padding:5px 10px;">×</button>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:30px 1fr 1fr 28px;gap:6px;margin-bottom:4px;">
@@ -142,11 +142,11 @@ function renderEditForm() {
   }).join('');
 
   container.innerHTML = `
-    <div style="background:var(--bg-card-hover);border-radius:10px;padding:16px;border:1px solid var(--accent);animation:fadeUp 0.2s ease;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div style="background:var(--bg-card-hover);border-radius:10px;padding:12px;border:1px solid var(--accent);animation:fadeUp 0.2s ease;overflow:hidden;">
+      <div style="margin-bottom:10px;">
         <span class="font-display" style="font-size:16px;font-weight:600;color:var(--accent);letter-spacing:0.5px;">EDITING WORKOUT</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div class="form-row" style="margin-bottom:8px;">
         <div class="form-group" style="margin-bottom:0;">
           <label>Date</label>
           <input type="date" class="form-input" value="${data.date}" onchange="window._editData.date=this.value">
