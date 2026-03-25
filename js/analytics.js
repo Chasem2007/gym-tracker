@@ -376,13 +376,13 @@ async function renderWaterAnalytics() {
 
   const maxGlasses = Math.max(...data.map(d => d.glasses), 1);
   const avgGlasses = (data.reduce((s, d) => s + d.glasses, 0) / data.length).toFixed(1);
-  const daysHitGoal = data.filter(d => d.glasses >= (waterGoal || 8)).length;
+  const daysHitGoal = data.filter(d => d.glasses >= (waterGoal || 64)).length;
 
   container.innerHTML = `
     <div style="display:flex;gap:24px;margin-bottom:16px;">
       <div>
         <span class="font-display" style="font-size:24px;font-weight:700;color:var(--blue);">${avgGlasses}</span>
-        <span style="font-size:12px;color:var(--text-muted);"> avg glasses/day</span>
+        <span style="font-size:12px;color:var(--text-muted);"> avg oz/day</span>
       </div>
       <div>
         <span class="font-display" style="font-size:24px;font-weight:700;color:var(--green);">${daysHitGoal}</span>
@@ -393,8 +393,8 @@ async function renderWaterAnalytics() {
       ${data.map(d => {
         const pct = (d.glasses / maxGlasses) * 100;
         const dateLabel = new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const color = d.glasses >= (waterGoal || 8) ? 'var(--green)' : 'var(--blue)';
-        return `<div style="flex:1;height:${Math.max(pct, 3)}%;background:${color};border-radius:2px 2px 0 0;min-height:3px;position:relative;cursor:pointer;" title="${dateLabel}: ${d.glasses} glasses"></div>`;
+        const color = d.glasses >= (waterGoal || 64) ? 'var(--green)' : 'var(--blue)';
+        return `<div style="flex:1;height:${Math.max(pct, 3)}%;background:${color};border-radius:2px 2px 0 0;min-height:3px;position:relative;cursor:pointer;" title="${dateLabel}: ${d.glasses} oz"></div>`;
       }).join('')}
     </div>
     <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:4px;">

@@ -2,12 +2,12 @@
   =============================================
   water.js — WATER INTAKE TRACKING
   =============================================
-  Track daily water glasses, see a weekly chart,
+  Track daily water in ounces, see a weekly chart,
   and set a daily hydration goal.
   =============================================
 */
 
-let waterGoal = 8;  // default 8 glasses
+let waterGoal = 64;  // default 64 oz (8 glasses)
 
 async function loadWaterData() {
   const todayStr = new Date().toISOString().split('T')[0];
@@ -78,7 +78,7 @@ function renderWaterWeekChart(weekData) {
         <div class="chart-bar-label">${dayLabel}</div>
         <div class="chart-bar-track">
           <div class="chart-bar-fill" style="width:${Math.max(Math.min(pct, 100), 2)}%;background:${color};">
-            ${glasses > 0 ? glasses + ' 💧' : ''}
+            ${glasses > 0 ? glasses + ' oz' : ''}
           </div>
         </div>
       </div>`;

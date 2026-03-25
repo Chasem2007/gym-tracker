@@ -1,24 +1,76 @@
 /*
   =============================================
-  workout.js — LOG WORKOUT
+  workout.js — LOG WORKOUT (with auto-save)
   =============================================
-  Pick exercises from the library, add sets
-  with weight and reps, then save everything
-  as one workout entry in Supabase.
+  
+  HOW AUTO-SAVE WORKS:
+  Every time you change anything — add an exercise,
+  type a weight, add a set, change the session name —
+  the entire workout-in-progress gets saved to
+  localStorage (your browser's built-in storage).
+  
+  When you navigate back to the Log Workout page,
+  it checks localStorage and restores everything
+  exactly where you left off.
+  
+  The draft clears ONLY when you:
+  1. Hit "Save Workout" (saves to Supabase, clears draft)
+  2. Hit "Discard Workout" (clears draft without saving)
   =============================================
 */
 
-// Holds the exercises being built for the current workout.
-// Each has: { id, name, muscles, sets: [{weight, reps}] }
+// The key used to store the draft in localStorage.
+// Each user gets their own draft so multiple users
+// on the same device don't overwrite each other.
+function getDraftKey() {
+  return 'ironlog_draft_' + (currentUser ? currentUser.user_id : 'anon');
+}
+
+// Holds the exercises being built for the current workout
 let currentExercises = [];
+
+// Saves the current workout state to localStorage
+function saveDraft() {
+  const draft = {
+    date: document.getElementById('workoutDate').value,
+    name: document.getElementById('workoutName').value,
+    notes: document.getElementById('workoutNotes').value,
+    exercises: currentExercises
+  };
+  localStorage.setItem(getDraftKey(), JSON.stringify(draft));
+}
+
+// Loads any saved draft when you visit the Log Workout page
+function loadDraft() {
+  const saved = localStorage.getItem(getDraftKey());
+  if (!saved) return;
+
+  try {
+    const draft = JSON.parse(saved);
+    if (draft.date) document.getElementById('workoutDate').value = draft.date;
+    if (draft.name) document.getElementById('workoutName').value = draft.name;
+    if (draft.notes) document.getElementById('workoutNotes').value = draft.notes;
+    if (draft.exercises && draft.exercises.length) {
+      currentExercises = draft.exercises;
+      renderExerciseList();
+      showToast('Workout draft restored', 'success');
+    }
+  } catch (e) {
+    // If the draft is corrupted, just clear it
+    localStorage.removeItem(getDraftKey());
+  }
+}
+
+// Clears the draft from localStorage
+function clearDraft() {
+  localStorage.removeItem(getDraftKey());
+}
 
 // Opens a modal showing all exercises to pick from
 async function openExercisePicker() {
   const exercises = await getExerciseLibrary();
-  
-  // Store exercises in a temporary global so we can look them up by index
   window._pickerExercises = exercises;
-  
+
   const html = exercises.map((ex, idx) => `
     <div class="library-card exercise-pick-item" style="cursor:pointer;padding:12px;" data-idx="${idx}">
       <div style="font-weight:600;font-size:14px;">${ex.name}</div>
@@ -33,9 +85,7 @@ async function openExercisePicker() {
         <div id="exPickerList" style="max-height:400px;overflow-y:auto;">${html}</div>
       </div>
     </div>`;
-  
-  // Use event delegation — one click listener on the list container
-  // that catches clicks on any exercise card inside it
+
   document.getElementById('exPickerList').addEventListener('click', function(e) {
     const card = e.target.closest('.exercise-pick-item');
     if (!card) return;
@@ -45,7 +95,6 @@ async function openExercisePicker() {
   });
 }
 
-// Filters the exercise picker modal as you type
 function filterExPicker(query) {
   document.querySelectorAll('#exPickerList .library-card').forEach(card => {
     const name = card.querySelector('div').textContent.toLowerCase();
@@ -57,21 +106,30 @@ function filterExPicker(query) {
 function addExerciseToWorkout(name, muscles) {
   closeModal();
   currentExercises.push({
-    id: Date.now(),  // simple unique ID
+    id: Date.now(),
     name,
     muscles: muscles || [],
-    sets: [{ weight: '', reps: '' }]  // start with one empty set
+    sets: [{ weight: '', reps: '' }]
   });
   renderExerciseList();
+  saveDraft();  // Auto-save!
 }
 
-// Draws all the exercise entries with their set rows
+// Draws all exercise entries with their set rows
 function renderExerciseList() {
   const container = document.getElementById('exerciseList');
+
   if (!currentExercises.length) {
     container.innerHTML = '<div class="empty-state"><p>Add exercises to start building your workout</p></div>';
+    // Hide discard button when nothing to discard
+    const discardBtn = document.getElementById('discardWorkoutBtn');
+    if (discardBtn) discardBtn.style.display = 'none';
     return;
   }
+
+  // Show discard button when there's a workout in progress
+  const discardBtn = document.getElementById('discardWorkoutBtn');
+  if (discardBtn) discardBtn.style.display = 'inline-flex';
 
   container.innerHTML = currentExercises.map((ex, exIdx) => {
     const setsHtml = ex.sets.map((s, setIdx) => `
@@ -107,12 +165,14 @@ function renderExerciseList() {
 // Updates a single set's weight or reps value
 function updateSet(exIdx, setIdx, field, value) {
   currentExercises[exIdx].sets[setIdx][field] = value;
+  saveDraft();  // Auto-save on every change!
 }
 
 // Adds a new empty set row to an exercise
 function addSet(exIdx) {
   currentExercises[exIdx].sets.push({ weight: '', reps: '' });
   renderExerciseList();
+  saveDraft();
 }
 
 // Removes a set row. If it was the last set, removes the whole exercise.
@@ -120,15 +180,28 @@ function removeSet(exIdx, setIdx) {
   currentExercises[exIdx].sets.splice(setIdx, 1);
   if (!currentExercises[exIdx].sets.length) currentExercises.splice(exIdx, 1);
   renderExerciseList();
+  saveDraft();
 }
 
 // Removes an entire exercise from the workout
 function removeExercise(exIdx) {
   currentExercises.splice(exIdx, 1);
   renderExerciseList();
+  saveDraft();
 }
 
-// Saves the entire workout to Supabase
+// Discards the in-progress workout
+function discardWorkout() {
+  if (!confirm('Discard this workout? All unsaved progress will be lost.')) return;
+  currentExercises = [];
+  clearDraft();
+  renderExerciseList();
+  document.getElementById('workoutName').value = '';
+  document.getElementById('workoutNotes').value = '';
+  showToast('Workout discarded');
+}
+
+// Saves the entire workout to Supabase and clears the draft
 async function saveWorkout() {
   if (!currentExercises.length) {
     showToast('Add at least one exercise', 'error');
@@ -140,7 +213,7 @@ async function saveWorkout() {
     date: document.getElementById('workoutDate').value,
     name: document.getElementById('workoutName').value.trim() || 'Workout',
     notes: document.getElementById('workoutNotes').value.trim(),
-    exercises: currentExercises  // stored as JSON in Supabase
+    exercises: currentExercises
   });
 
   if (error) {
@@ -148,9 +221,9 @@ async function saveWorkout() {
     return;
   }
 
-  showToast('Workout saved!');
-  // Reset the form
+  showToast('Workout saved! 💪');
   currentExercises = [];
+  clearDraft();  // Clear the draft since it's now saved to Supabase
   renderExerciseList();
   document.getElementById('workoutName').value = '';
   document.getElementById('workoutNotes').value = '';

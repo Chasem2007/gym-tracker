@@ -84,6 +84,9 @@ function enterApp() {
 
   // Go to dashboard
   showPage('dashboard');
+
+  // Check if this user needs first-time setup
+  checkFirstTimeSetup();
 }
 
 // Runs on page load — checks if you were already logged in
