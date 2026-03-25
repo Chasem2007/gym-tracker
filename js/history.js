@@ -112,7 +112,7 @@ function renderEditForm() {
 
   const exercisesHtml = data.exercises.map((ex, exIdx) => {
     const setsHtml = (ex.sets || []).map((s, sIdx) => `
-      <div style="display:grid;grid-template-columns:30px 1fr 1fr 28px;gap:6px;margin-bottom:4px;align-items:center;">
+      <div style="display:grid;grid-template-columns:20px 1fr 1fr 20px;gap:6px;margin-bottom:4px;align-items:center;">
         <div style="font-size:11px;color:var(--text-muted);text-align:center;">${sIdx + 1}</div>
         <input type="number" placeholder="lbs" value="${s.weight || ''}"
                class="set-input" onchange="editUpdateSet(${exIdx},${sIdx},'weight',this.value)">
@@ -131,7 +131,7 @@ function renderEditForm() {
           <button class="btn btn-danger btn-sm" onclick="editRemoveExercise(${exIdx})" style="padding:5px 10px;">×</button>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:30px 1fr 1fr 28px;gap:6px;margin-bottom:4px;">
+      <div style="display:grid;grid-template-columns:20px 1fr 1fr 20px;gap:6px;margin-bottom:4px;">
         <div style="font-size:9px;color:var(--text-muted);text-align:center;">SET</div>
         <div style="font-size:9px;color:var(--text-muted);text-align:center;">WEIGHT</div>
         <div style="font-size:9px;color:var(--text-muted);text-align:center;">REPS</div>

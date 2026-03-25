@@ -228,7 +228,7 @@ select.form-input {
 }
 .exercise-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .exercise-name { font-weight: 600; font-size: 15px; }
-.set-row { display: grid; grid-template-columns: 40px 1fr 1fr 40px; gap: 8px; align-items: center; margin-bottom: 6px; }
+.set-row { display: grid; grid-template-columns: 30px 1fr 1fr 30px; gap: 6px; align-items: center; margin-bottom: 6px; }
 .set-num { font-size: 12px; color: var(--text-muted); font-weight: 600; text-align: center; }
 .set-input {
   padding: 7px 10px; background: var(--bg-primary);
@@ -428,12 +428,17 @@ select.form-input {
   .tabs::-webkit-scrollbar { display: none; }
   .tab-btn { flex: 0 0 auto; padding: 8px 12px; white-space: nowrap; font-size: 12px; }
 
-  /* Exercise entries tighter */
-  .set-row { grid-template-columns: 24px 1fr 1fr 24px; gap: 4px; }
-  .set-num { font-size: 11px; }
-  .set-input { padding: 6px 4px; font-size: 16px; }
-  .exercise-entry { padding: 10px; }
+  /* Exercise entries tighter on mobile */
+  .set-row { grid-template-columns: 20px 1fr 1fr 20px; gap: 3px; }
+  .set-num { font-size: 10px; }
+  .set-input { padding: 6px 2px; font-size: 16px; width: 100%; min-width: 0; }
+  .exercise-entry { padding: 8px; }
   .exercise-name { font-size: 14px; word-break: break-word; }
+  
+  /* The header labels for SET/WEIGHT/REPS columns */
+  .exercise-entry div[style*="grid-template-columns"] { 
+    grid-template-columns: 20px 1fr 1fr 20px !important; gap: 3px !important; 
+  }
 
   /* Member rows wrap better */
   .member-row { flex-wrap: wrap; gap: 8px; }

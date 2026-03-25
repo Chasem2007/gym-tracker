@@ -151,7 +151,7 @@ function renderExerciseList() {
           <button class="btn btn-danger btn-sm" onclick="removeExercise(${exIdx})">Remove</button>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:40px 1fr 1fr 40px;gap:8px;margin-bottom:6px;">
+      <div style="display:grid;grid-template-columns:20px 1fr 1fr 20px;gap:4px;margin-bottom:6px;">
         <div style="font-size:10px;color:var(--text-muted);text-align:center;">SET</div>
         <div style="font-size:10px;color:var(--text-muted);text-align:center;">WEIGHT</div>
         <div style="font-size:10px;color:var(--text-muted);text-align:center;">REPS</div>
