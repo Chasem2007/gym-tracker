@@ -16,7 +16,7 @@ async function loadCalorieData() {
     .from('user_settings')
     .select('calorie_goal')
     .eq('user_id', currentUser.user_id)
-    .single();
+    .maybeSingle();
 
   const goal = profile?.calorie_goal || 2500;
   document.getElementById('calorieGoal').value = goal;

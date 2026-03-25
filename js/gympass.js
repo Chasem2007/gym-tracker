@@ -19,7 +19,7 @@ async function loadGymPassData() {
     .from('user_settings')
     .select('gym_name, barcode_number, barcode_format')
     .eq('user_id', currentUser.user_id)
-    .single();
+    .maybeSingle();
 
   if (data && data.barcode_number) {
     generateBarcodeDisplay(data.barcode_number, data.barcode_format || 'CODE39', data.gym_name);
