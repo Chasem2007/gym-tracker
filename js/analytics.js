@@ -13,19 +13,29 @@ async function loadAnalytics() {
   if (!currentUser) return;
   const uid = currentUser.user_id;
 
-  // Load ALL workouts (not just this week)
-  const { data: allWorkouts } = await db
-    .from('workouts')
-    .select('*')
-    .eq('user_id', uid)
-    .order('date', { ascending: true });
+  const thirtyAgo = new Date();
+  thirtyAgo.setDate(thirtyAgo.getDate() - 30);
+  const startStr = thirtyAgo.toISOString().split('T')[0];
+
+  // Load workouts and water data in parallel
+  const [{ data: allWorkouts }, { data: waterData }] = await Promise.all([
+    db.from('workouts')
+      .select('*')
+      .eq('user_id', uid)
+      .order('date', { ascending: true }),
+    db.from('water_intake')
+      .select('*')
+      .eq('user_id', uid)
+      .gte('date', startStr)
+      .order('date', { ascending: true })
+  ]);
 
   const workouts = allWorkouts || [];
 
   renderPRBoard(workouts);
   populateStrengthSelect(workouts);
   renderHeatmap(workouts);
-  renderWaterAnalytics();
+  renderWaterAnalytics(waterData || []);
 }
 
 // =============================================
@@ -355,18 +365,7 @@ function calculateStreak(volumeByDate) {
 // =============================================
 // WATER ANALYTICS — 30-day water intake chart
 // =============================================
-async function renderWaterAnalytics() {
-  const thirtyAgo = new Date();
-  thirtyAgo.setDate(thirtyAgo.getDate() - 30);
-  const startStr = thirtyAgo.toISOString().split('T')[0];
-
-  const { data } = await db
-    .from('water_intake')
-    .select('*')
-    .eq('user_id', currentUser.user_id)
-    .gte('date', startStr)
-    .order('date', { ascending: true });
-
+function renderWaterAnalytics(data) {
   const container = document.getElementById('waterAnalyticsChart');
 
   if (!data || !data.length) {

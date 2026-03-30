@@ -15,36 +15,27 @@ async function loadWaterData() {
   if (!currentUser) return;
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Load goal from user_settings (maybeSingle = no error if row missing)
-  try {
-    const { data: profile } = await db
-      .from('user_settings')
+  // Load goal and today's count in parallel
+  const [profileResult, todayResult] = await Promise.all([
+    db.from('user_settings')
       .select('water_goal')
       .eq('user_id', currentUser.user_id)
-      .maybeSingle();
+      .maybeSingle()
+      .catch(() => ({ data: null })),
+    db.from('water_intake')
+      .select('glasses')
+      .eq('user_id', currentUser.user_id)
+      .eq('date', todayStr)
+      .maybeSingle()
+      .catch(() => ({ data: null }))
+  ]);
 
-    waterGoal = (profile && profile.water_goal) ? profile.water_goal : 64;
-  } catch (e) {
-    waterGoal = 64;
-  }
+  waterGoal = (profileResult.data && profileResult.data.water_goal) ? profileResult.data.water_goal : 64;
 
   document.getElementById('waterGoalInput').value = waterGoal;
   document.getElementById('waterGoalDisplay').textContent = waterGoal;
 
-  // Load today's count
-  let todayOz = 0;
-  try {
-    const { data: todayData } = await db
-      .from('water_intake')
-      .select('glasses')
-      .eq('user_id', currentUser.user_id)
-      .eq('date', todayStr)
-      .maybeSingle();
-
-    todayOz = (todayData && todayData.glasses) ? todayData.glasses : 0;
-  } catch (e) {
-    todayOz = 0;
-  }
+  let todayOz = (todayResult.data && todayResult.data.glasses) ? todayResult.data.glasses : 0;
 
   document.getElementById('waterCount').textContent = todayOz;
 

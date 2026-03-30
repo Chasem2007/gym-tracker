@@ -19,13 +19,27 @@ async function loadDashboard() {
   const weekStr = weekAgo.toISOString().split('T')[0];
   const todayStr = now.toISOString().split('T')[0];
 
-  // --- Fetch this week's workouts ---
-  const { data: workouts } = await db
-    .from('workouts')
-    .select('*')
-    .eq('user_id', uid)
-    .gte('date', weekStr)      // gte = "greater than or equal"
-    .order('date', { ascending: false });
+  // --- Fetch all data in parallel ---
+  const [
+    { data: workouts },
+    { data: wd },
+    { data: cd }
+  ] = await Promise.all([
+    db.from('workouts')
+      .select('*')
+      .eq('user_id', uid)
+      .gte('date', weekStr)
+      .order('date', { ascending: false }),
+    db.from('body_weight')
+      .select('weight')
+      .eq('user_id', uid)
+      .order('date', { ascending: false })
+      .limit(1),
+    db.from('calories')
+      .select('calories')
+      .eq('user_id', uid)
+      .eq('date', todayStr)
+  ]);
 
   document.getElementById('statWorkouts').textContent = workouts ? workouts.length : 0;
 
@@ -52,21 +66,8 @@ async function loadDashboard() {
   }
   document.getElementById('statVolume').textContent = totalVol.toLocaleString();
 
-  // --- Latest body weight ---
-  const { data: wd } = await db
-    .from('body_weight')
-    .select('weight')
-    .eq('user_id', uid)
-    .order('date', { ascending: false })
-    .limit(1);
   document.getElementById('statWeight').textContent = wd && wd.length ? wd[0].weight : '—';
 
-  // --- Today's total calories ---
-  const { data: cd } = await db
-    .from('calories')
-    .select('calories')
-    .eq('user_id', uid)
-    .eq('date', todayStr);
   const todayCals = cd ? cd.reduce((sum, c) => sum + (c.calories || 0), 0) : 0;
   document.getElementById('statCalories').textContent = todayCals.toLocaleString();
 

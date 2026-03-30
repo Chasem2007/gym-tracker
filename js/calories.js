@@ -11,24 +11,22 @@
 async function loadCalorieData() {
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Load saved calorie goal from user_settings
-  const { data: profile } = await db
-    .from('user_settings')
-    .select('calorie_goal')
-    .eq('user_id', currentUser.user_id)
-    .maybeSingle();
+  // Load calorie goal and today's entries in parallel
+  const [{ data: profile }, { data }] = await Promise.all([
+    db.from('user_settings')
+      .select('calorie_goal')
+      .eq('user_id', currentUser.user_id)
+      .maybeSingle(),
+    db.from('calories')
+      .select('*')
+      .eq('user_id', currentUser.user_id)
+      .eq('date', todayStr)
+      .order('created_at', { ascending: false })
+  ]);
 
   const goal = profile?.calorie_goal || 2500;
   document.getElementById('calorieGoal').value = goal;
   document.getElementById('calorieGoalDisplay').textContent = goal;
-
-  // Load today's food entries
-  const { data } = await db
-    .from('calories')
-    .select('*')
-    .eq('user_id', currentUser.user_id)
-    .eq('date', todayStr)
-    .order('created_at', { ascending: false });
 
   const total = data ? data.reduce((sum, c) => sum + (c.calories || 0), 0) : 0;
   document.getElementById('calorieTodayValue').textContent = total;
