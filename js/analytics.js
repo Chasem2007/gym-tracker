@@ -11,6 +11,12 @@
 
 async function loadAnalytics() {
   if (!currentUser) return;
+
+  if (!isPro()) {
+    showUpgradePrompt('analytics-content', 'Analytics');
+    return;
+  }
+
   const uid = currentUser.user_id;
 
   const thirtyAgo = new Date();

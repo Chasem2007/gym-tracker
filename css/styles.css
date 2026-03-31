@@ -639,3 +639,84 @@ select.form-input {
     padding-bottom: 20px;
   }
 }
+
+/* ===== PRO BADGE ===== */
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  background: linear-gradient(135deg, #ffd740, #ff9800);
+  color: #000;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(255,215,64,0.4);
+}
+
+/* ===== UPGRADE PROMPT ===== */
+.upgrade-prompt {
+  text-align: center;
+  padding: 48px 24px;
+  animation: fadeUp 0.3s ease;
+}
+.upgrade-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 12px rgba(255,215,64,0.5));
+}
+.upgrade-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.upgrade-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 400px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+.upgrade-features {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  margin-bottom: 28px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+.upgrade-feature-item {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.upgrade-btn {
+  font-size: 15px;
+  padding: 14px 32px;
+  letter-spacing: 0.5px;
+}
+.upgrade-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+/* ===== MUSCLE MAP UPGRADE OVERLAY ===== */
+.muscle-map-upgrade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  min-height: 160px;
+}

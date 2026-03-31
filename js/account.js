@@ -46,6 +46,9 @@ async function loadAccountData() {
     onAcctGymSelect();
   }
 
+  // Render subscription status
+  renderSubscriptionStatus();
+
   // Clear password fields
   document.getElementById('acctCurrentPass').value = '';
   document.getElementById('acctNewPass').value = '';
@@ -117,6 +120,35 @@ async function saveAccountBarcode() {
     barcode_format: gym ? gym.format : 'CODE39'
   });
   showToast('Barcode saved!');
+}
+
+// ===== SUBSCRIPTION STATUS =====
+
+function renderSubscriptionStatus() {
+  const el = document.getElementById('subscriptionStatus');
+  if (!el) return;
+
+  if (isPro()) {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-input);border:1px solid var(--accent);border-radius:var(--radius-sm);">
+        <div style="font-size:28px;">⚡</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;color:var(--accent);font-family:var(--font-display);letter-spacing:1px;">IRONLOG PRO</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">You have full access to all features</div>
+        </div>
+        <span class="pro-badge" style="font-size:11px;">PRO</span>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div style="padding:16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px;">Free Plan</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Upgrade to Pro to unlock analytics, calorie tracking, workout editing, and more.</div>
+        <button class="btn btn-primary" onclick="startCheckout()" style="width:100%;justify-content:center;">
+          ⚡ Upgrade to Pro — $6.99/mo
+        </button>
+        <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;">Cancel anytime. No contracts.</div>
+      </div>`;
+  }
 }
 
 // ===== FIRST-TIME SETUP WIZARD =====

@@ -70,7 +70,7 @@
         <img src="logo.png" alt="IRONLOG" style="width:40px;height:40px;object-fit:contain;">
         <div>
           <h1>IRONLOG</h1>
-          <span>Beta v0.1</span>
+          <span>v1.0</span>
         </div>
       </div>
     </div>
@@ -132,7 +132,10 @@
         <div class="user-avatar" id="userAvatar">C</div>
         <div class="user-info">
           <div class="name" id="userName">Chase</div>
-          <div class="role" id="userRole">Admin</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="role" id="userRole">Admin</div>
+            <span id="proBadge" class="pro-badge hidden">PRO</span>
+          </div>
         </div>
         <button class="btn-logout" onclick="handleLogout()" title="Log out">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -275,6 +278,7 @@
     <!-- CALORIES -->
     <div id="page-calories" class="page-container hidden">
       <div class="page-header"><h2>Calorie Tracker</h2><p>Monitor your daily intake</p></div>
+      <div id="calories-content">
       <div class="grid-2" style="align-items:start;">
         <div class="card">
           <div class="card-title mb-16">Today's Intake</div>
@@ -308,6 +312,7 @@
         <table class="data-table"><thead><tr><th>Food</th><th>Calories</th><th>Protein</th><th></th></tr></thead>
         <tbody id="calorieLogTable"></tbody></table>
       </div>
+      </div><!-- end calories-content -->
     </div>
 
     <!-- HISTORY -->
@@ -354,43 +359,45 @@
         <p>Deep dive into your training data</p>
       </div>
 
-      <!-- PR Board -->
-      <div class="card mb-16">
-        <div class="card-header"><span class="card-title">🏆 Personal Records</span></div>
-        <div id="prBoard"><div class="empty-state"><p>Log some workouts to see your PRs</p></div></div>
-      </div>
-
-      <!-- Strength Progress -->
-      <div class="card mb-16">
-        <div class="card-header">
-          <span class="card-title">Strength Progress</span>
-          <select id="strengthExerciseSelect" class="form-input" style="width:auto;max-width:200px;" onchange="renderStrengthChart()">
-            <option value="">Select exercise</option>
-          </select>
+      <div id="analytics-content">
+        <!-- PR Board -->
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">🏆 Personal Records</span></div>
+          <div id="prBoard"><div class="empty-state"><p>Log some workouts to see your PRs</p></div></div>
         </div>
-        <div id="strengthChart"><div class="empty-state"><p>Select an exercise to view progress</p></div></div>
-      </div>
 
-      <!-- Workout Heatmap -->
-      <div class="card mb-16">
-        <div class="card-header"><span class="card-title">Workout Consistency</span></div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Last 6 months — darker = more volume that day</div>
-        <div id="workoutHeatmap" style="overflow-x:auto;"></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:10px;justify-content:flex-end;">
-          <span style="font-size:11px;color:var(--text-muted);">Less</span>
-          <div style="width:12px;height:12px;border-radius:2px;background:var(--bg-input);"></div>
-          <div style="width:12px;height:12px;border-radius:2px;background:rgba(255,58,58,0.2);"></div>
-          <div style="width:12px;height:12px;border-radius:2px;background:rgba(255,58,58,0.45);"></div>
-          <div style="width:12px;height:12px;border-radius:2px;background:rgba(255,58,58,0.7);"></div>
-          <div style="width:12px;height:12px;border-radius:2px;background:var(--accent);"></div>
-          <span style="font-size:11px;color:var(--text-muted);">More</span>
+        <!-- Strength Progress -->
+        <div class="card mb-16">
+          <div class="card-header">
+            <span class="card-title">Strength Progress</span>
+            <select id="strengthExerciseSelect" class="form-input" style="width:auto;max-width:200px;" onchange="renderStrengthChart()">
+              <option value="">Select exercise</option>
+            </select>
+          </div>
+          <div id="strengthChart"><div class="empty-state"><p>Select an exercise to view progress</p></div></div>
         </div>
-      </div>
 
-      <!-- Water Stats -->
-      <div class="card">
-        <div class="card-header"><span class="card-title">💧 Hydration (30 Days)</span></div>
-        <div id="waterAnalyticsChart"></div>
+        <!-- Workout Heatmap -->
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">Workout Consistency</span></div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Last 6 months — darker = more volume that day</div>
+          <div id="workoutHeatmap" style="overflow-x:auto;"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:10px;justify-content:flex-end;">
+            <span style="font-size:11px;color:var(--text-muted);">Less</span>
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--bg-input);"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:rgba(255,58,58,0.2);"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:rgba(255,58,58,0.45);"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:rgba(255,58,58,0.7);"></div>
+            <div style="width:12px;height:12px;border-radius:2px;background:var(--accent);"></div>
+            <span style="font-size:11px;color:var(--text-muted);">More</span>
+          </div>
+        </div>
+
+        <!-- Water Stats -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">💧 Hydration (30 Days)</span></div>
+          <div id="waterAnalyticsChart"></div>
+        </div>
       </div>
     </div>
 
@@ -428,6 +435,12 @@
           <input type="password" id="acctConfirmPass" class="form-input" placeholder="Re-enter new password">
         </div>
         <button class="btn btn-primary" onclick="saveAccountPassword()">Update Password</button>
+      </div>
+
+      <!-- Subscription section -->
+      <div class="account-section" id="subscriptionSection">
+        <div class="account-section-title">Subscription</div>
+        <div id="subscriptionStatus"></div>
       </div>
 
       <!-- Gym Barcode section -->
@@ -543,6 +556,7 @@
      12. app.js     = starts everything up
 -->
 <script src="js/config.js"></script>
+<script src="js/subscription.js"></script>
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/auth.js"></script>

@@ -64,10 +64,14 @@ async function loadHistory() {
       </div>
       ${w.notes ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;font-style:italic;">"${w.notes}"</div>` : ''}
       ${details}
-      <div style="margin-top:10px;display:flex;gap:6px;">
+      ${isPro() ? `<div style="margin-top:10px;display:flex;gap:6px;">
         <button class="btn btn-secondary btn-sm" onclick="startEditWorkout(${w.id})">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteWorkout(${w.id})">Delete</button>
-      </div>
+      </div>` : `<div style="margin-top:10px;">
+        <span style="font-size:11px;color:var(--text-muted);">
+          <span style="color:var(--yellow);font-weight:600;">⚡ Pro</span> — Upgrade to edit &amp; delete workouts
+        </span>
+      </div>`}
     </div>`;
   }).join('');
 

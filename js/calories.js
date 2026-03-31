@@ -9,6 +9,11 @@
 */
 
 async function loadCalorieData() {
+  if (!isPro()) {
+    showUpgradePrompt('calories-content', 'Calorie Tracking');
+    return;
+  }
+
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Load calorie goal and today's entries in parallel

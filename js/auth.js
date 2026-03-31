@@ -82,8 +82,14 @@ function enterApp() {
   document.getElementById('weightDate').value = today;
   document.getElementById('calorieDate').value = today;
 
+  // Show/hide pro badge
+  updateProBadge();
+
   // Go to dashboard
   showPage('dashboard');
+
+  // Check for Stripe upgrade return
+  checkUpgradeReturn();
 
   // Check if this user needs first-time setup
   checkFirstTimeSetup();

@@ -75,8 +75,12 @@ function setLibraryFilter(filter, btn) {
   renderLibrary();
 }
 
-// Opens a modal to create a brand new exercise
+// Opens a modal to create a brand new exercise (Pro only)
 function openAddExerciseModal() {
+  if (!isPro()) {
+    showUpgradePrompt('libraryGrid', 'Custom Exercises');
+    return;
+  }
   document.getElementById('modalContainer').innerHTML = `
     <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
       <div class="modal-box">

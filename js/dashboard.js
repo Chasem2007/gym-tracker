@@ -78,7 +78,21 @@ async function loadDashboard() {
     `${greeting}, ${currentUser.display_name || currentUser.username}. Let's get after it.`;
 
   // --- Render visuals ---
-  renderMuscleMap(musclesHit);
+  if (isPro()) {
+    renderMuscleMap(musclesHit);
+  } else {
+    document.getElementById('muscleMap').innerHTML = '';
+    document.getElementById('muscleLegend').innerHTML = '';
+    document.querySelector('.muscle-map-container').innerHTML = `
+      <div class="muscle-map-upgrade">
+        <div style="font-size:28px;margin-bottom:8px;">🗺️</div>
+        <div style="font-weight:700;font-size:14px;color:var(--text-primary);margin-bottom:4px;">Muscle Map</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">See which muscles you've trained this week</div>
+        <button class="btn btn-primary btn-sm" onclick="startCheckout()" style="font-size:12px;padding:8px 16px;">
+          ⚡ Upgrade to Pro
+        </button>
+      </div>`;
+  }
   renderRecentActivity(workouts || []);
   renderWeeklyVolume(workouts || []);
 }
