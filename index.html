@@ -25,26 +25,147 @@
 </head>
 <body>
 
-<!-- ============ LOGIN PAGE ============ -->
+<!-- ============ LOGIN / LANDING PAGE ============ -->
 <div id="loginPage" class="login-page">
-  <div class="login-box">
+
+  <!-- LANDING VIEW (shown by default) -->
+  <div id="landingView" class="landing-view">
+    <div class="landing-inner">
+
+      <div class="landing-brand">
+        <img src="logo.png" alt="IRONLOG" class="landing-logo">
+        <h1 class="landing-title">IRONLOG</h1>
+        <p class="landing-tagline">Track. Lift. Conquer.</p>
+      </div>
+
+      <!-- Free vs Pro plan comparison -->
+      <div class="plan-grid">
+        <div class="plan-card">
+          <div class="plan-card-name">Free</div>
+          <div class="plan-card-price">$0</div>
+          <div class="plan-card-sub">forever</div>
+          <ul class="plan-card-features">
+            <li>Unlimited workout logging</li>
+            <li>Workout history</li>
+            <li>Exercise library</li>
+            <li>Body weight tracking</li>
+            <li>Water intake tracking</li>
+            <li>Gym pass barcode</li>
+          </ul>
+        </div>
+        <div class="plan-card plan-card-pro">
+          <div class="plan-card-tag">POPULAR</div>
+          <div class="plan-card-name">Pro</div>
+          <div class="plan-card-price">$6.99<span>/mo</span></div>
+          <div class="plan-card-sub">cancel anytime</div>
+          <ul class="plan-card-features">
+            <li>Everything in Free</li>
+            <li class="feature-pro">Advanced analytics</li>
+            <li class="feature-pro">Calorie &amp; macro tracking</li>
+            <li class="feature-pro">Edit past workouts</li>
+            <li class="feature-pro">Custom exercises</li>
+            <li class="feature-pro">Interactive muscle map</li>
+          </ul>
+        </div>
+      </div>
+
+      <button class="btn btn-primary landing-cta" onclick="showSignUp()">GET STARTED FREE</button>
+      <button class="landing-login-btn" onclick="showLoginForm()">Already have an account? <span>Log in</span></button>
+      <div class="landing-footer">A CM Marketing &amp; Design Application</div>
+    </div>
+  </div>
+
+  <!-- LOGIN FORM VIEW (shown when user clicks "Log in") -->
+  <div id="loginView" class="hidden">
+    <div class="login-box">
+      <button class="landing-back-btn" onclick="showLanding()">← Back</button>
+      <div style="text-align:center;margin-bottom:8px;">
+        <img src="logo.png" alt="IRONLOG" style="width:60px;height:60px;object-fit:contain;">
+      </div>
+      <h1>IRONLOG</h1>
+      <p class="subtitle">Welcome back</p>
+      <div id="loginError" class="login-error"></div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUser" class="form-input" placeholder="Enter username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" class="form-input" placeholder="Enter password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary w-full mt-16" onclick="handleLogin()" style="justify-content:center;padding:14px;">LOG IN</button>
+      <button class="landing-login-btn" style="margin-top:16px;" onclick="showSignUp()">Don't have an account? <span>Sign up free</span></button>
+      <div style="text-align:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);">A CM Marketing &amp; Design Application</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ SIGN UP OVERLAY ============ -->
+<div id="signupOverlay" class="setup-overlay" style="display:none;">
+  <div class="setup-box">
     <div style="text-align:center;margin-bottom:8px;">
-      <img src="logo.png" alt="IRONLOG" style="width:80px;height:80px;object-fit:contain;">
+      <img src="logo.png" alt="IRONLOG" style="width:56px;height:56px;object-fit:contain;">
     </div>
-    <h1>IRONLOG</h1>
-    <p class="subtitle">Track. Lift. Conquer.</p>
-    <div id="loginError" class="login-error"></div>
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="loginUser" class="form-input" placeholder="Enter username" autocomplete="username">
+    <h2 class="font-display" style="text-align:center;font-size:22px;letter-spacing:2px;color:var(--accent);margin-bottom:4px;">JOIN IRONLOG</h2>
+    <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:20px;">Create your free account</p>
+
+    <div class="setup-progress">
+      <div class="setup-dot current" id="signupDot1"></div>
+      <div class="setup-dot" id="signupDot2"></div>
     </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="loginPass" class="form-input" placeholder="Enter password" autocomplete="current-password">
+
+    <!-- Step 1: Basic Info -->
+    <div class="setup-step active" id="signupStep1">
+      <div class="form-group">
+        <label>Display Name</label>
+        <input type="text" id="signupName" class="form-input" placeholder="Your name">
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Username</label>
+          <input type="text" id="signupUsername" class="form-input" placeholder="username" autocomplete="off">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Age</label>
+          <input type="number" id="signupAge" class="form-input" placeholder="25" min="13" max="100">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:16px;">
+        <label>Password</label>
+        <input type="password" id="signupPass" class="form-input" placeholder="At least 6 characters">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="signupConfirm" class="form-input" placeholder="Re-enter password">
+      </div>
+      <div id="signupError" class="login-error" style="display:none;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" onclick="showLanding()" style="flex:1;justify-content:center;">Cancel</button>
+        <button class="btn btn-primary" onclick="signupValidateStep1()" style="flex:1;justify-content:center;">Next →</button>
+      </div>
     </div>
-    <button class="btn btn-primary w-full mt-16" onclick="handleLogin()" style="justify-content:center;padding:14px;">LOG IN</button>
-    <div style="text-align:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
-      <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);">A CM Marketing &amp; Design Application</span>
+
+    <!-- Step 2: Gym Barcode (optional) -->
+    <div class="setup-step" id="signupStep2">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Add your gym membership barcode to scan in at the door. You can always do this later in My Account.</p>
+      <div class="form-group">
+        <label>Select Your Gym <span style="color:var(--text-muted);">(optional)</span></label>
+        <select id="signupGymSelect" class="form-input">
+          <option value="">— Choose your gym —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Barcode Number <span style="color:var(--text-muted);">(optional)</span></label>
+        <input type="text" id="signupBarcodeNumber" class="form-input" placeholder="Number under your card's barcode">
+      </div>
+      <div id="signupError2" class="login-error" style="display:none;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" onclick="signupGoTo(1)" style="flex:1;justify-content:center;">← Back</button>
+        <button class="btn btn-primary" onclick="handleSignUp()" style="flex:1;justify-content:center;">Create Account</button>
+      </div>
     </div>
   </div>
 </div>
