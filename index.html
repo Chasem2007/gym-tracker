@@ -226,11 +226,12 @@
     <div id="page-gympass" class="page-container hidden">
       <div class="page-header"><h2>Gym Pass</h2><p>Show this at the front desk</p></div>
       <div class="card" style="text-align:center;">
+        <div id="barcodeLoading" class="loading-spinner" style="display:none;"><div class="spinner"></div></div>
         <div id="barcodeDisplay" style="padding:20px;background:white;border-radius:10px;margin-bottom:16px;display:none;">
           <div id="barcodeGymLabel" style="font-family:'Oswald',sans-serif;font-size:18px;color:#333;letter-spacing:2px;margin-bottom:8px;"></div>
           <svg id="barcodeImage"></svg>
         </div>
-        <div id="barcodeEmpty" class="empty-state" style="padding:24px;">
+        <div id="barcodeEmpty" class="empty-state" style="padding:24px;display:none;">
           <div style="font-size:36px;margin-bottom:12px;">🏋️</div>
           <p>No barcode set up yet</p>
           <p style="font-size:12px;">Go to <strong>My Account</strong> to set up your gym barcode</p>

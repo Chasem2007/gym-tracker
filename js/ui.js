@@ -4,6 +4,14 @@
   =============================================
 */
 
+// Shows a spinner inside any element while data is loading.
+// Pass either an element ID (string) or a DOM element.
+function showLoading(el) {
+  if (typeof el === 'string') el = document.getElementById(el);
+  if (!el) return;
+  el.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+}
+
 function showToast(msg, type = 'success') {
   const t = document.createElement('div');
   t.className = `toast ${type}`;

@@ -31,6 +31,8 @@ async function saveWeight() {
 
 // Loads weight data and renders the chart + table
 async function loadWeightData() {
+  showLoading('weightChart');
+  showLoading('weightHistoryTable');
   const { data } = await db
     .from('body_weight')
     .select('*')

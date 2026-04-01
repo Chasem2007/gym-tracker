@@ -19,6 +19,7 @@
 let editingWorkoutId = null;
 
 async function loadHistory() {
+  showLoading('workoutHistoryList');
   const { data } = await db
     .from('workouts')
     .select('*')

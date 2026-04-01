@@ -9,6 +9,7 @@
 */
 
 async function loadMembers() {
+  showLoading('membersList');
   const { data } = await db
     .from('users')
     .select('*')

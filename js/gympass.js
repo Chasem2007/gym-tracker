@@ -15,11 +15,19 @@ const SUPPORTED_GYMS = [
 ];
 
 async function loadGymPassData() {
+  // Hide both states while loading
+  document.getElementById('barcodeDisplay').style.display = 'none';
+  document.getElementById('barcodeEmpty').style.display = 'none';
+  document.getElementById('fullscreenBtn').style.display = 'none';
+  document.getElementById('barcodeLoading').style.display = 'flex';
+
   const { data } = await db
     .from('user_settings')
     .select('gym_name, barcode_number, barcode_format')
     .eq('user_id', currentUser.user_id)
     .maybeSingle();
+
+  document.getElementById('barcodeLoading').style.display = 'none';
 
   if (data && data.barcode_number) {
     generateBarcodeDisplay(data.barcode_number, data.barcode_format || 'CODE39', data.gym_name);

@@ -13,6 +13,7 @@ let waterGoal = 64;  // default 64 oz
 
 async function loadWaterData() {
   if (!currentUser) return;
+  showLoading('waterWeekChart');
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Load goal and today's count in parallel

@@ -17,6 +17,10 @@ async function loadAnalytics() {
     return;
   }
 
+  showLoading('prBoard');
+  showLoading('strengthChart');
+  showLoading('workoutHeatmap');
+  showLoading('waterAnalyticsChart');
   const uid = currentUser.user_id;
 
   const thirtyAgo = new Date();

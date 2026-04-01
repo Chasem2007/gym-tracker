@@ -12,6 +12,8 @@
 
 async function loadDashboard() {
   if (!currentUser) return;
+  showLoading('dashRecentActivity');
+  showLoading('weeklyVolumeChart');
   const uid = currentUser.user_id;
   const now = new Date();
   const weekAgo = new Date(now);
