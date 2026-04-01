@@ -70,21 +70,34 @@ function clearDraft() {
 async function openExercisePicker() {
   const exercises = await getExerciseLibrary();
   window._pickerExercises = exercises;
-
-  const html = exercises.map((ex, idx) => `
-    <div class="library-card exercise-pick-item" style="cursor:pointer;padding:12px;" data-idx="${idx}">
-      <div style="font-weight:600;font-size:14px;">${ex.name}</div>
-      <div style="font-size:11px;color:var(--text-muted);">${ex.equipment || ''} — ${(ex.muscles || []).join(', ')}</div>
-    </div>`).join('');
+  window._pickerMuscleFilter = 'all';
 
   document.getElementById('modalContainer').innerHTML = `
     <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
       <div class="modal-box">
         <div class="modal-title">Select Exercise</div>
-        <input type="text" class="form-input mb-16" placeholder="Search..." oninput="filterExPicker(this.value)">
-        <div id="exPickerList" style="max-height:400px;overflow-y:auto;">${html}</div>
+        <input type="text" id="exPickerSearch" class="form-input" style="margin-bottom:12px;" placeholder="Search exercises...">
+        <div class="tabs" id="exPickerTabs" style="margin-bottom:12px;flex-wrap:wrap;gap:4px;">
+          <button class="tab-btn active" onclick="setExPickerFilter('all',this)">All</button>
+          <button class="tab-btn" onclick="setExPickerFilter('chest',this)">Chest</button>
+          <button class="tab-btn" onclick="setExPickerFilter('back',this)">Back</button>
+          <button class="tab-btn" onclick="setExPickerFilter('legs',this)">Legs</button>
+          <button class="tab-btn" onclick="setExPickerFilter('shoulders',this)">Shoulders</button>
+          <button class="tab-btn" onclick="setExPickerFilter('arms',this)">Arms</button>
+          <button class="tab-btn" onclick="setExPickerFilter('core',this)">Core</button>
+          <button class="tab-btn" onclick="setExPickerFilter('cardio',this)">Cardio</button>
+        </div>
+        <div id="exPickerList" style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+          ${exercises.map((ex, idx) => `
+            <div class="library-card exercise-pick-item" style="cursor:pointer;padding:12px;" data-idx="${idx}" data-category="${ex.category || ''}">
+              <div style="font-weight:600;font-size:14px;">${ex.name}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${ex.equipment || ''} — ${(ex.muscles || []).join(', ')}</div>
+            </div>`).join('')}
+        </div>
       </div>
     </div>`;
+
+  document.getElementById('exPickerSearch').addEventListener('input', filterExPicker);
 
   document.getElementById('exPickerList').addEventListener('click', function(e) {
     const card = e.target.closest('.exercise-pick-item');
@@ -95,10 +108,22 @@ async function openExercisePicker() {
   });
 }
 
-function filterExPicker(query) {
-  document.querySelectorAll('#exPickerList .library-card').forEach(card => {
+function setExPickerFilter(filter, btn) {
+  window._pickerMuscleFilter = filter;
+  document.querySelectorAll('#exPickerTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  filterExPicker();
+}
+
+function filterExPicker() {
+  const query = (document.getElementById('exPickerSearch')?.value || '').toLowerCase();
+  const filter = window._pickerMuscleFilter || 'all';
+  document.querySelectorAll('#exPickerList .exercise-pick-item').forEach(card => {
     const name = card.querySelector('div').textContent.toLowerCase();
-    card.style.display = name.includes(query.toLowerCase()) ? '' : 'none';
+    const category = card.dataset.category || '';
+    const matchesSearch = !query || name.includes(query);
+    const matchesFilter = filter === 'all' || category === filter;
+    card.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
   });
 }
 
