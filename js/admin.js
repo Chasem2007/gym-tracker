@@ -31,7 +31,7 @@ async function loadMembers() {
         <div class="member-meta">@${u.username} — joined ${new Date(u.created_at).toLocaleDateString()}</div>
       </div>
       <span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-member'}">${u.role === 'admin' ? 'Admin' : 'Member'}</span>
-      <span class="badge badge-beta">BETA</span>
+      <span class="badge ${u.subscription === 'pro' ? 'badge-pro' : 'badge-free'}">${u.subscription === 'pro' ? 'PRO' : 'FREE'}</span>
       ${!isSelf ? `<button class="btn btn-danger btn-sm" onclick="deleteMember('${u.user_id}','${u.username}')">Remove</button>` : ''}
     </div>`;
   }).join('');

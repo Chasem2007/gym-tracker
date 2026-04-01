@@ -531,6 +531,8 @@ select.form-input {
 .badge-admin { background: var(--accent-dim); color: var(--accent); }
 .badge-member { background: rgba(255,255,255,0.05); color: var(--text-muted); }
 .badge-beta { background: var(--yellow-dim); color: var(--yellow); }
+.badge-pro { background: linear-gradient(135deg, rgba(255,215,64,0.2), rgba(255,152,0,0.2)); color: var(--yellow); border: 1px solid rgba(255,215,64,0.3); }
+.badge-free { background: rgba(255,255,255,0.05); color: var(--text-muted); }
 
 /* ===== WEIGHT CHART ===== */
 .weight-chart { position: relative; height: 200px; padding: 10px 0; }

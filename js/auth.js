@@ -96,11 +96,22 @@ function enterApp() {
 }
 
 // Runs on page load — checks if you were already logged in
-function checkSession() {
+async function checkSession() {
   const s = localStorage.getItem('ironlog_session');
   if (s) {
     try {
       currentUser = JSON.parse(s);
+      // Re-fetch from DB to pick up any new columns (e.g. subscription)
+      // added since the session was cached
+      const { data } = await db
+        .from('users')
+        .select('*')
+        .eq('user_id', currentUser.user_id)
+        .single();
+      if (data) {
+        currentUser = data;
+        localStorage.setItem('ironlog_session', JSON.stringify(data));
+      }
       enterApp();
     } catch (e) {
       localStorage.removeItem('ironlog_session');
