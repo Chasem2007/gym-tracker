@@ -33,6 +33,21 @@ async function loadAccountData() {
   document.getElementById('acctDisplayName').value = currentUser.display_name || '';
   document.getElementById('acctUsername').value = currentUser.username || '';
 
+  // Avatar
+  const avatarPreview = document.getElementById('acctAvatarPreview');
+  if (avatarPreview) {
+    updateAvatarPreview(currentUser.avatar_url);
+  }
+  if (document.getElementById('acctAvatarUrl')) {
+    document.getElementById('acctAvatarUrl').value = currentUser.avatar_url || '';
+  }
+
+  // Searchable toggle
+  const searchableToggle = document.getElementById('acctSearchable');
+  if (searchableToggle) {
+    searchableToggle.checked = currentUser.searchable !== false;
+  }
+
   // Populate gym dropdown
   const select = document.getElementById('acctGymSelect');
   select.innerHTML = '<option value="">— Choose your gym —</option>' +
@@ -55,6 +70,17 @@ async function loadAccountData() {
   document.getElementById('acctConfirmPass').value = '';
 }
 
+function updateAvatarPreview(url) {
+  const preview = document.getElementById('acctAvatarPreview');
+  if (!preview) return;
+  const initial = (currentUser.display_name || currentUser.username || '?').charAt(0).toUpperCase();
+  if (url) {
+    preview.innerHTML = `<img src="${url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<div class=\\'avatar-initial\\'style=\\'width:72px;height:72px;font-size:28px;\\'>${initial}</div>'">`;
+  } else {
+    preview.innerHTML = `<div class="avatar-initial" style="width:72px;height:72px;font-size:28px;">${initial}</div>`;
+  }
+}
+
 function onAcctGymSelect() {
   const gymName = document.getElementById('acctGymSelect').value;
   const gym = SUPPORTED_GYMS.find(g => g.name === gymName);
@@ -70,19 +96,28 @@ function onAcctGymSelect() {
 async function saveAccountProfile() {
   const displayName = document.getElementById('acctDisplayName').value.trim();
   const username = document.getElementById('acctUsername').value.trim().toLowerCase();
+  const avatarUrl = document.getElementById('acctAvatarUrl')?.value.trim() || null;
+  const searchable = document.getElementById('acctSearchable')?.checked !== false;
+
   if (!username) { showToast('Username is required', 'error'); return; }
 
-  const { error } = await db.from('users')
-    .update({ display_name: displayName || username, username })
-    .eq('user_id', currentUser.user_id);
+  const updates = {
+    display_name: displayName || username,
+    username,
+    searchable,
+    avatar_url: avatarUrl || null
+  };
 
+  const { error } = await db.from('users').update(updates).eq('user_id', currentUser.user_id);
   if (error) { showToast('Error: ' + (error.message || 'Could not update'), 'error'); return; }
 
-  currentUser.display_name = displayName || username;
-  currentUser.username = username;
+  Object.assign(currentUser, updates);
   localStorage.setItem('ironlog_session', JSON.stringify(currentUser));
+
+  // Update sidebar
   document.getElementById('userName').textContent = currentUser.display_name;
-  document.getElementById('userAvatar').textContent = currentUser.display_name.charAt(0).toUpperCase();
+  updateSidebarAvatar();
+  updateAvatarPreview(avatarUrl);
   showToast('Profile updated!');
 }
 

@@ -9,6 +9,11 @@
 */
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Immediately hide login page if we have a cached session so there's no flash
+  if (localStorage.getItem('ironlog_session')) {
+    document.getElementById('loginPage').classList.add('hidden');
+  }
+
   // Check if you were previously logged in
   checkSession();
 

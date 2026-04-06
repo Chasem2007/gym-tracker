@@ -74,6 +74,8 @@ async function handleSignUp() {
   const password        = document.getElementById('signupPass').value;
   const gymName         = document.getElementById('signupGymSelect').value;
   const barcodeNumber   = document.getElementById('signupBarcodeNumber').value.trim();
+  const avatar_url      = document.getElementById('signupAvatarUrl')?.value.trim() || null;
+  const searchable      = document.getElementById('signupSearchable')?.checked !== false;
   const err             = document.getElementById('signupError2');
 
   const createBtn = document.querySelector('#signupStep2 .btn-primary');
@@ -85,7 +87,9 @@ async function handleSignUp() {
   const { error } = await db.from('users').insert({
     user_id, username, password, display_name, age,
     role: 'member',
-    subscription: 'free'
+    subscription: 'free',
+    searchable,
+    avatar_url: avatar_url || null
   });
 
   if (error) {
@@ -111,7 +115,7 @@ async function handleSignUp() {
   }
 
   // Auto-login after signup
-  currentUser = { user_id, username, password, display_name, age, role: 'member', subscription: 'free', created_at: new Date().toISOString() };
+  currentUser = { user_id, username, password, display_name, age, role: 'member', subscription: 'free', searchable, avatar_url: avatar_url || null, created_at: new Date().toISOString() };
   localStorage.setItem('ironlog_session', JSON.stringify(currentUser));
   // Mark setup as done so the wizard doesn't show
   localStorage.setItem('ironlog_setup_done_' + user_id, 'true');
@@ -175,14 +179,26 @@ function handleLogout() {
   showLanding();
 }
 
+// Updates the sidebar avatar — image if set, else initial letter
+function updateSidebarAvatar() {
+  const avatarEl = document.getElementById('userAvatar');
+  if (!avatarEl) return;
+  const initial = (currentUser.display_name || currentUser.username || '?').charAt(0).toUpperCase();
+  if (currentUser.avatar_url) {
+    avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='${initial}'">`;
+  } else {
+    avatarEl.textContent = initial;
+  }
+}
+
 // Sets up the app UI after a successful login
 function enterApp() {
   document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
 
-  // Show the user's name and initial in the sidebar
+  // Show the user's name and avatar in the sidebar
   document.getElementById('userName').textContent = currentUser.display_name || currentUser.username;
-  document.getElementById('userAvatar').textContent = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
+  updateSidebarAvatar();
   document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Super Admin' : 'Member';
 
   // Only show the Admin section for admin users

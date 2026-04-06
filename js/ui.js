@@ -42,6 +42,7 @@ function showPage(id) {
   if (id === 'friends') loadFriends();
   if (id === 'programs') loadPrograms();
   if (id === 'measurements') loadMeasurements();
+  if (id === 'habits') loadHabits();
 }
 
 function toggleSidebar() {

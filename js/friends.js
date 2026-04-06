@@ -6,14 +6,17 @@
 
   CREATE TABLE friendships (
     id uuid primary key default gen_random_uuid(),
-    requester_id uuid references users(user_id) on delete cascade,
-    addressee_id uuid references users(user_id) on delete cascade,
+    requester_id text references users(user_id) on delete cascade,
+    addressee_id text references users(user_id) on delete cascade,
     status text default 'pending' check (status in ('pending','accepted')),
     created_at timestamptz default now(),
     unique(requester_id, addressee_id)
   );
   CREATE INDEX ON friendships(requester_id);
   CREATE INDEX ON friendships(addressee_id);
+
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS searchable boolean DEFAULT true;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text;
   =============================================
 */
 
@@ -48,13 +51,22 @@ async function switchFriendsTab(tab) {
   else await renderFriendsList();
 }
 
+// Returns avatar HTML — img if URL set, else styled initial
+function avatarHtml(user, size = 36) {
+  const initial = (user.display_name || user.username || '?').charAt(0).toUpperCase();
+  if (user.avatar_url) {
+    return `<img src="${user.avatar_url}" class="avatar-img" style="width:${size}px;height:${size}px;"
+      onerror="this.outerHTML='<div class=\\'avatar-initial\\'style=\\'width:${size}px;height:${size}px;font-size:${Math.round(size*0.4)}px;\\'>${initial}</div>'">`;
+  }
+  return `<div class="avatar-initial" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.4)}px;">${initial}</div>`;
+}
+
 // ===== LEADERBOARD =====
 
 async function renderLeaderboard(metricKey) {
   const container = document.getElementById('friends-body');
   container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
 
-  // Get accepted friend IDs
   let friendIds = [];
   try {
     const { data: fs } = await db.from('friendships')
@@ -69,27 +81,24 @@ async function renderLeaderboard(metricKey) {
 
   const allIds = [currentUser.user_id, ...friendIds];
 
-  // Fetch workouts for all users (last 30 days for consistency)
   const thirtyAgo = new Date();
   thirtyAgo.setDate(thirtyAgo.getDate() - 30);
   const startStr = thirtyAgo.toISOString().split('T')[0];
 
   const [{ data: workouts }, { data: userList }] = await Promise.all([
     db.from('workouts').select('user_id, date, exercises').in('user_id', allIds).gte('date', startStr),
-    db.from('users').select('user_id, name, username').in('user_id', allIds)
+    db.from('users').select('user_id, display_name, username, avatar_url').in('user_id', allIds)
   ]);
 
   const usersMap = {};
   (userList || []).forEach(u => usersMap[u.user_id] = u);
 
-  // Collect exercises for metric selector
   const exerciseSet = new Set();
   (workouts || []).forEach(w => {
     const exs = typeof w.exercises === 'string' ? JSON.parse(w.exercises) : (w.exercises || []);
     exs.forEach(ex => { if (ex.name) exerciseSet.add(ex.name); });
   });
 
-  // Score calculation
   const metric = metricKey || 'consistency';
   const scores = {};
   allIds.forEach(id => scores[id] = 0);
@@ -99,7 +108,6 @@ async function renderLeaderboard(metricKey) {
       if (scores[w.user_id] !== undefined) scores[w.user_id]++;
     });
   } else {
-    // PR for specific exercise
     (workouts || []).forEach(w => {
       const exs = typeof w.exercises === 'string' ? JSON.parse(w.exercises) : (w.exercises || []);
       exs.forEach(ex => {
@@ -117,12 +125,11 @@ async function renderLeaderboard(metricKey) {
   }
 
   const ranked = allIds
-    .map(id => ({ ...usersMap[id], score: scores[id] || 0 }))
+    .map(id => ({ ...(usersMap[id] || {}), user_id: id, score: scores[id] || 0 }))
     .sort((a, b) => b.score - a.score);
 
   const metricLabel = metric === 'consistency' ? 'Workouts (30 days)' : `${metric} e1RM`;
-  const formatScore = (s) => metric === 'consistency' ? s : Math.round(s) + ' lbs';
-
+  const formatScore = s => metric === 'consistency' ? s : Math.round(s) + ' lbs';
   const exercises = [...exerciseSet].sort();
 
   container.innerHTML = `
@@ -141,9 +148,12 @@ async function renderLeaderboard(metricKey) {
         return `
           <div class="leaderboard-row${isMe ? ' leaderboard-row--me' : ''}">
             <div class="lb-rank">${rank}</div>
-            <div class="lb-user">
-              <div class="lb-name">${user.name || user.username || 'Unknown'}${isMe ? ' <span style="font-size:11px;color:var(--text-muted);">(you)</span>' : ''}</div>
-              <div class="lb-username">@${user.username || '—'}</div>
+            <div style="display:flex;align-items:center;gap:10px;flex:1;">
+              ${avatarHtml(user, 38)}
+              <div>
+                <div class="lb-name">${user.display_name || user.username || 'Unknown'}${isMe ? ' <span style="font-size:11px;color:var(--text-muted);">(you)</span>' : ''}</div>
+                <div class="lb-username">@${user.username || '—'}</div>
+              </div>
             </div>
             <div class="lb-score">
               <span class="font-display" style="font-size:20px;font-weight:700;color:${isMe ? 'var(--accent)' : 'var(--text-primary)'};">${formatScore(user.score)}</span>
@@ -173,33 +183,38 @@ async function renderFriendsList() {
   const incoming = allFriendships.filter(f => f.status === 'pending' && f.addressee_id === currentUser.user_id);
   const outgoing = allFriendships.filter(f => f.status === 'pending' && f.requester_id === currentUser.user_id);
 
-  // Collect all friend user IDs to look up names
-  const otherIds = allFriendships.map(f =>
+  const otherIds = [...new Set(allFriendships.map(f =>
     f.requester_id === currentUser.user_id ? f.addressee_id : f.requester_id
-  ).filter(Boolean);
+  ).filter(Boolean))];
 
   let usersMap = {};
   if (otherIds.length) {
-    const { data: users } = await db.from('users').select('user_id, name, username').in('user_id', otherIds);
+    const { data: users } = await db.from('users')
+      .select('user_id, display_name, username, avatar_url')
+      .in('user_id', otherIds);
     (users || []).forEach(u => usersMap[u.user_id] = u);
   }
 
   const friendCard = (f, type) => {
     const otherId = f.requester_id === currentUser.user_id ? f.addressee_id : f.requester_id;
     const user = usersMap[otherId] || {};
+    const nameHtml = user.display_name || user.username || 'Unknown';
+    const usernameHtml = '@' + (user.username || '—');
     if (type === 'accepted') return `
       <div class="friend-card">
+        ${avatarHtml(user, 40)}
         <div class="friend-info">
-          <div class="friend-name">${user.name || user.username || 'Unknown'}</div>
-          <div class="friend-username">@${user.username || '—'}</div>
+          <div class="friend-name">${nameHtml}</div>
+          <div class="friend-username">${usernameHtml}</div>
         </div>
         <button class="btn btn-danger btn-sm" onclick="removeFriend('${f.id}')">Remove</button>
       </div>`;
     if (type === 'incoming') return `
       <div class="friend-card">
+        ${avatarHtml(user, 40)}
         <div class="friend-info">
-          <div class="friend-name">${user.name || user.username || 'Unknown'}</div>
-          <div class="friend-username">@${user.username || '—'}</div>
+          <div class="friend-name">${nameHtml}</div>
+          <div class="friend-username">${usernameHtml}</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-primary btn-sm" onclick="acceptFriend('${f.id}')">Accept</button>
@@ -208,9 +223,10 @@ async function renderFriendsList() {
       </div>`;
     if (type === 'outgoing') return `
       <div class="friend-card">
+        ${avatarHtml(user, 40)}
         <div class="friend-info">
-          <div class="friend-name">${user.name || user.username || 'Unknown'}</div>
-          <div class="friend-username">@${user.username || '—'} · Pending</div>
+          <div class="friend-name">${nameHtml}</div>
+          <div class="friend-username">${usernameHtml} · <span style="color:var(--yellow);">Pending</span></div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="cancelFriendRequest('${f.id}')">Cancel</button>
       </div>`;
@@ -220,7 +236,8 @@ async function renderFriendsList() {
     <div class="friends-section">
       <div class="friends-section-title">Find Friends</div>
       <div style="display:flex;gap:8px;">
-        <input type="text" id="friendSearchInput" class="form-input" placeholder="Search by username..." style="flex:1;">
+        <input type="text" id="friendSearchInput" class="form-input" placeholder="Search by username..." style="flex:1;"
+          onkeydown="if(event.key==='Enter')searchFriends()">
         <button class="btn btn-primary" onclick="searchFriends()">Search</button>
       </div>
       <div id="friendSearchResults" style="margin-top:10px;"></div>
@@ -247,37 +264,48 @@ async function renderFriendsList() {
 }
 
 async function searchFriends() {
-  const query = document.getElementById('friendSearchInput').value.trim();
+  const query = (document.getElementById('friendSearchInput')?.value || '').trim();
   const results = document.getElementById('friendSearchResults');
-  if (!query) return;
+  if (!query || !results) return;
 
   results.innerHTML = '<div class="loading-spinner" style="padding:10px 0;"><div class="spinner"></div></div>';
 
-  const { data: users } = await db.from('users')
-    .select('user_id, name, username')
+  // Search users who have searchable=true (or null/missing column — handle gracefully)
+  const { data: users, error } = await db.from('users')
+    .select('user_id, display_name, username, avatar_url, searchable')
     .ilike('username', `%${query}%`)
     .neq('user_id', currentUser.user_id)
-    .limit(8);
+    .limit(10);
 
-  if (!users || !users.length) {
+  if (error) {
+    results.innerHTML = '<p style="font-size:13px;color:var(--text-muted);">Search unavailable.</p>';
+    return;
+  }
+
+  // Filter out users who have explicitly opted out (searchable = false)
+  const visible = (users || []).filter(u => u.searchable !== false);
+
+  if (!visible.length) {
     results.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:8px 0;">No users found.</p>';
     return;
   }
 
-  // Get existing friendship IDs to avoid duplicates
-  const { data: existing } = await db.from('friendships')
-    .select('requester_id, addressee_id, status')
-    .or(`requester_id.eq.${currentUser.user_id},addressee_id.eq.${currentUser.user_id}`);
+  // Get existing connections to mark them
+  let existingIds = new Set();
+  try {
+    const { data: existing } = await db.from('friendships')
+      .select('requester_id, addressee_id')
+      .or(`requester_id.eq.${currentUser.user_id},addressee_id.eq.${currentUser.user_id}`);
+    (existing || []).forEach(f => {
+      existingIds.add(f.requester_id === currentUser.user_id ? f.addressee_id : f.requester_id);
+    });
+  } catch (e) { /* ignore */ }
 
-  const existingIds = new Set(
-    (existing || []).flatMap(f => [f.requester_id, f.addressee_id])
-  );
-  existingIds.delete(currentUser.user_id);
-
-  results.innerHTML = users.map(u => `
-    <div class="friend-card">
+  results.innerHTML = visible.map(u => `
+    <div class="friend-card" style="margin-bottom:8px;">
+      ${avatarHtml(u, 40)}
       <div class="friend-info">
-        <div class="friend-name">${u.name || u.username}</div>
+        <div class="friend-name">${u.display_name || u.username}</div>
         <div class="friend-username">@${u.username}</div>
       </div>
       ${existingIds.has(u.user_id)
@@ -287,8 +315,7 @@ async function searchFriends() {
 }
 
 async function sendFriendRequest(addresseeId, btn) {
-  btn.disabled = true;
-  btn.textContent = '...';
+  btn.disabled = true; btn.textContent = '...';
   const { error } = await db.from('friendships').insert({
     requester_id: currentUser.user_id,
     addressee_id: addresseeId,
@@ -296,7 +323,7 @@ async function sendFriendRequest(addresseeId, btn) {
   });
   if (error) { showToast('Could not send request', 'error'); btn.disabled = false; btn.textContent = 'Add Friend'; return; }
   showToast('Friend request sent!');
-  btn.textContent = 'Sent ✓';
+  btn.textContent = 'Sent ✓'; btn.disabled = true;
 }
 
 async function acceptFriend(friendshipId) {

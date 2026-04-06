@@ -17,14 +17,109 @@
   =============================================
 */
 
-let _programDraft = null; // in-progress builder state
+/*
+  Weekly schedule SQL:
+  CREATE TABLE weekly_schedule (
+    id uuid primary key default gen_random_uuid(),
+    user_id text references users(user_id) on delete cascade,
+    day_of_week int not null, -- 0=Monday ... 6=Sunday
+    label text,
+    updated_at timestamptz default now(),
+    unique(user_id, day_of_week)
+  );
+*/
+
+let _programDraft = null;
+let _programsTab = 'schedule'; // 'schedule' | 'programs'
 
 async function loadPrograms() {
   if (!isPro()) {
-    showUpgradePrompt('programs-content', 'Program Builder');
+    showUpgradePrompt('programs-content', 'Programs & Schedules');
     return;
   }
-  await renderProgramsList();
+  renderProgramsTabBar();
+  if (_programsTab === 'schedule') await renderWeeklySchedule();
+  else await renderProgramsList();
+}
+
+function renderProgramsTabBar() {
+  const container = document.getElementById('programs-content');
+  // Inject tab bar at top (preserve rest)
+  let tabBar = document.getElementById('programs-tab-bar');
+  if (!tabBar) {
+    tabBar = document.createElement('div');
+    tabBar.id = 'programs-tab-bar';
+    container.prepend(tabBar);
+  }
+  tabBar.innerHTML = `
+    <div class="tabs" style="margin-bottom:20px;">
+      <button class="tab-btn${_programsTab === 'schedule' ? ' active' : ''}"
+        onclick="switchProgramsTab('schedule')">📅 Weekly Schedule</button>
+      <button class="tab-btn${_programsTab === 'programs' ? ' active' : ''}"
+        onclick="switchProgramsTab('programs')">📋 Programs</button>
+    </div>`;
+}
+
+async function switchProgramsTab(tab) {
+  _programsTab = tab;
+  const container = document.getElementById('programs-content');
+  container.innerHTML = '';
+  renderProgramsTabBar();
+  if (tab === 'schedule') await renderWeeklySchedule();
+  else await renderProgramsList();
+}
+
+// ===== WEEKLY SCHEDULE =====
+
+const DAYS_OF_WEEK = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+async function renderWeeklySchedule() {
+  const container = document.getElementById('programs-content');
+  const tabBar = document.getElementById('programs-tab-bar');
+
+  // Load existing schedule
+  let schedule = {};
+  try {
+    const { data } = await db.from('weekly_schedule')
+      .select('*').eq('user_id', currentUser.user_id);
+    (data || []).forEach(row => { schedule[row.day_of_week] = row.label || ''; });
+  } catch (e) { /* table may not exist yet */ }
+
+  const scheduleHtml = `
+    <div id="weekly-schedule-body">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">
+        Set what you typically train each day. This is your default weekly split — tap any day to edit it.
+      </p>
+      <div class="weekly-schedule-grid">
+        ${DAYS_OF_WEEK.map((day, i) => {
+          const label = schedule[i] || '';
+          const isToday = new Date().getDay() === (i === 6 ? 0 : i + 1); // Mon=0 in our mapping
+          return `
+            <div class="schedule-day-card${isToday ? ' schedule-day-card--today' : ''}${label ? ' schedule-day-card--set' : ''}">
+              <div class="schedule-day-name">${day}${isToday ? ' <span style="font-size:10px;color:var(--accent);">TODAY</span>' : ''}</div>
+              <input type="text" class="form-input schedule-day-input" placeholder="e.g. Chest & Tri, Rest"
+                value="${label}" data-day="${i}"
+                onchange="saveScheduleDay(${i}, this.value)"
+                oninput="this.closest('.schedule-day-card').classList.toggle('schedule-day-card--set', this.value.trim().length > 0)">
+            </div>`;
+        }).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:16px;">Changes save automatically.</p>
+    </div>`;
+
+  // Append after tab bar
+  let body = document.getElementById('weekly-schedule-body');
+  if (body) { body.outerHTML = scheduleHtml; }
+  else { container.insertAdjacentHTML('beforeend', scheduleHtml); }
+}
+
+async function saveScheduleDay(dayOfWeek, label) {
+  try {
+    await db.from('weekly_schedule').upsert(
+      { user_id: currentUser.user_id, day_of_week: dayOfWeek, label: label.trim() },
+      { onConflict: 'user_id,day_of_week' }
+    );
+  } catch (e) { /* ignore if table doesn't exist */ }
 }
 
 // ===== PROGRAMS LIST =====
