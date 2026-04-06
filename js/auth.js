@@ -74,7 +74,7 @@ async function handleSignUp() {
   const password        = document.getElementById('signupPass').value;
   const gymName         = document.getElementById('signupGymSelect').value;
   const barcodeNumber   = document.getElementById('signupBarcodeNumber').value.trim();
-  const avatar_url      = document.getElementById('signupAvatarUrl')?.value.trim() || null;
+  const avatarFile      = document.getElementById('signupAvatarFile')?.files[0] || null;
   const searchable      = document.getElementById('signupSearchable')?.checked !== false;
   const err             = document.getElementById('signupError2');
 
@@ -89,7 +89,7 @@ async function handleSignUp() {
     role: 'member',
     subscription: 'free',
     searchable,
-    avatar_url: avatar_url || null
+    avatar_url: null
   });
 
   if (error) {
@@ -100,6 +100,23 @@ async function handleSignUp() {
       : 'Error creating account: ' + (error.message || 'Please try again.');
     err.style.display = 'block';
     return;
+  }
+
+  // Upload avatar if provided
+  let avatar_url = null;
+  if (avatarFile) {
+    try {
+      const ext = avatarFile.name.split('.').pop().toLowerCase() || 'jpg';
+      const path = `${user_id}.${ext}`;
+      const { error: upErr } = await db.storage.from('avatars').upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
+      if (!upErr) {
+        const { data: { publicUrl } } = db.storage.from('avatars').getPublicUrl(path);
+        avatar_url = publicUrl;
+        await db.from('users').update({ avatar_url }).eq('user_id', user_id);
+      }
+    } catch (e) {
+      console.warn('Avatar upload failed during signup:', e);
+    }
   }
 
   // Save gym barcode if provided
@@ -115,7 +132,7 @@ async function handleSignUp() {
   }
 
   // Auto-login after signup
-  currentUser = { user_id, username, password, display_name, age, role: 'member', subscription: 'free', searchable, avatar_url: avatar_url || null, created_at: new Date().toISOString() };
+  currentUser = { user_id, username, password, display_name, age, role: 'member', subscription: 'free', searchable, avatar_url, created_at: new Date().toISOString() };
   localStorage.setItem('ironlog_session', JSON.stringify(currentUser));
   // Mark setup as done so the wizard doesn't show
   localStorage.setItem('ironlog_setup_done_' + user_id, 'true');
@@ -123,6 +140,23 @@ async function handleSignUp() {
   document.getElementById('signupOverlay').style.display = 'none';
   enterApp();
   showToast('Welcome to IRONLOG! 💪');
+}
+
+// Shows a local preview of selected avatar during signup
+function previewSignupAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    // Store data URL temporarily; real upload happens in handleSignUp
+    document.getElementById('signupAvatarUrl').value = e.target.result;
+    // Update preview if one exists
+    const preview = document.getElementById('signupAvatarPreview');
+    if (preview) {
+      preview.innerHTML = `<img src="${e.target.result}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);">`;
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 // ===== LOGIN =====

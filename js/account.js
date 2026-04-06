@@ -74,10 +74,60 @@ function updateAvatarPreview(url) {
   const preview = document.getElementById('acctAvatarPreview');
   if (!preview) return;
   const initial = (currentUser.display_name || currentUser.username || '?').charAt(0).toUpperCase();
-  if (url) {
-    preview.innerHTML = `<img src="${url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<div class=\\'avatar-initial\\'style=\\'width:72px;height:72px;font-size:28px;\\'>${initial}</div>'">`;
-  } else {
-    preview.innerHTML = `<div class="avatar-initial" style="width:72px;height:72px;font-size:28px;">${initial}</div>`;
+  const imgHtml = url
+    ? `<img src="${url}" class="avatar-upload-img" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+       <div class="avatar-initial" style="width:80px;height:80px;font-size:30px;display:none;">${initial}</div>`
+    : `<div class="avatar-initial" style="width:80px;height:80px;font-size:30px;">${initial}</div>`;
+  preview.innerHTML = `
+    <div class="avatar-upload-wrap" onclick="document.getElementById('avatarFileInput').click()" title="Change photo">
+      ${imgHtml}
+      <div class="avatar-upload-overlay">📷</div>
+    </div>
+    <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarFileChange(this)">`;
+}
+
+async function handleAvatarFileChange(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Show local preview immediately
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wrap = document.querySelector('.avatar-upload-wrap');
+    if (wrap) {
+      const img = wrap.querySelector('img') || document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'avatar-upload-img';
+    }
+  };
+  reader.readAsDataURL(file);
+
+  // Upload to Supabase Storage
+  showToast('Uploading photo...');
+  try {
+    const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+    const path = `${currentUser.user_id}.${ext}`;
+
+    const { error: upErr } = await db.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (upErr) throw upErr;
+
+    const { data: { publicUrl } } = db.storage.from('avatars').getPublicUrl(path);
+
+    // Save URL to users table
+    await db.from('users').update({ avatar_url: publicUrl }).eq('user_id', currentUser.user_id);
+    currentUser.avatar_url = publicUrl;
+    localStorage.setItem('ironlog_session', JSON.stringify(currentUser));
+    updateSidebarAvatar();
+    if (document.getElementById('acctAvatarUrl')) {
+      document.getElementById('acctAvatarUrl').value = publicUrl;
+    }
+    showToast('Profile photo updated!');
+  } catch (e) {
+    showToast('Upload failed — check Supabase Storage setup', 'error');
+    console.error('Avatar upload error:', e);
   }
 }
 

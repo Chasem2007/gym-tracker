@@ -147,8 +147,15 @@
         <input type="password" id="signupConfirm" class="form-input" placeholder="Re-enter password">
       </div>
       <div class="form-group">
-        <label>Profile Picture URL <span style="color:var(--text-muted);">(optional)</span></label>
-        <input type="url" id="signupAvatarUrl" class="form-input" placeholder="https://...">
+        <label>Profile Photo <span style="color:var(--text-muted);">(optional)</span></label>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div id="signupAvatarPreview" class="avatar-initial" style="width:52px;height:52px;font-size:20px;flex-shrink:0;">?</div>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;">
+            📷 Choose Photo
+            <input type="file" id="signupAvatarFile" accept="image/*" style="display:none;" onchange="previewSignupAvatar(this)">
+          </label>
+        </div>
+        <input type="hidden" id="signupAvatarUrl">
       </div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
@@ -680,12 +687,12 @@
       <!-- Profile section -->
       <div class="account-section">
         <div class="account-section-title">Profile</div>
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
           <div id="acctAvatarPreview"></div>
-          <div style="flex:1;">
-            <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Profile Picture</div>
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Paste an image URL</div>
-            <input type="url" id="acctAvatarUrl" class="form-input" placeholder="https://..." oninput="updateAvatarPreview(this.value)">
+          <div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Profile Photo</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Tap photo to upload from your device</div>
+            <input type="hidden" id="acctAvatarUrl">
           </div>
         </div>
         <div class="form-group">
