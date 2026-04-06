@@ -46,6 +46,9 @@ async function loadAnalytics() {
   populateStrengthSelect(workouts);
   renderHeatmap(workouts);
   renderWaterAnalytics(waterData || []);
+  renderStrengthScore(workouts);
+  renderMuscleVolumeTrend(workouts);
+  renderTopLiftsSparklines(workouts);
 }
 
 // =============================================
@@ -387,6 +390,7 @@ function renderWaterAnalytics(data) {
   const avgGlasses = (data.reduce((s, d) => s + d.glasses, 0) / data.length).toFixed(1);
   const daysHitGoal = data.filter(d => d.glasses >= (waterGoal || 64)).length;
 
+  const waterGoal = parseInt(localStorage.getItem('ironlog_water_goal')) || 64;
   container.innerHTML = `
     <div style="display:flex;gap:24px;margin-bottom:16px;">
       <div>
@@ -409,5 +413,220 @@ function renderWaterAnalytics(data) {
     <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:4px;">
       <span>${new Date(data[0].date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
       <span>${new Date(data[data.length - 1].date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+    </div>`;
+}
+
+// =============================================
+// STRENGTH SCORE — Composite e1RM from benchmark lifts
+// =============================================
+function renderStrengthScore(workouts) {
+  const container = document.getElementById('strengthScoreSection');
+  const BENCHMARKS = ['Bench Press', 'Squat', 'Deadlift', 'Overhead Press', 'Barbell Row'];
+  const best = {};
+
+  workouts.forEach(w => {
+    const exs = typeof w.exercises === 'string' ? JSON.parse(w.exercises) : (w.exercises || []);
+    exs.forEach(ex => {
+      const match = BENCHMARKS.find(b => ex.name && ex.name.toLowerCase().includes(b.toLowerCase()));
+      if (!match) return;
+      (ex.sets || []).forEach(s => {
+        const weight = parseFloat(s.weight) || 0;
+        const reps = parseInt(s.reps) || 0;
+        if (weight <= 0 || reps <= 0) return;
+        const e1rm = weight * (1 + reps / 30);
+        if (!best[match] || e1rm > best[match]) best[match] = e1rm;
+      });
+    });
+  });
+
+  const entries = BENCHMARKS.filter(b => best[b]);
+  if (!entries.length) {
+    container.innerHTML = '<div class="empty-state"><p>Log Bench Press, Squat, Deadlift, OHP, or Barbell Row to see your score</p></div>';
+    return;
+  }
+
+  const totalScore = Math.round(entries.reduce((sum, b) => sum + best[b], 0));
+  const pct = Math.min((totalScore / 2000) * 100, 100);
+
+  container.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div class="font-display" style="font-size:64px;font-weight:700;color:var(--accent);line-height:1;">${totalScore.toLocaleString()}</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Total Strength Score (lbs e1RM)</div>
+    </div>
+    <div class="strength-score-bar-track">
+      <div class="strength-score-bar-fill" style="width:${pct}%;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:4px;margin-bottom:20px;">
+      <span>0</span><span>2,000</span>
+    </div>
+    <div class="strength-score-breakdown">
+      ${BENCHMARKS.map(b => {
+        const val = best[b] ? Math.round(best[b]) : null;
+        return `
+          <div class="strength-score-lift${val ? '' : ' strength-score-lift--missing'}">
+            <span class="strength-score-lift-name">${b}</span>
+            <span class="strength-score-lift-val">${val ? val + ' lbs' : '—'}</span>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// =============================================
+// MUSCLE VOLUME TREND — Sets per muscle group per week
+// =============================================
+function renderMuscleVolumeTrend(workouts) {
+  const container = document.getElementById('muscleVolumeTrend');
+  const MUSCLES = ['chest', 'back', 'legs', 'shoulders', 'arms', 'core'];
+  const COLORS = {
+    chest: 'var(--accent)', back: '#4a9eff', legs: 'var(--green)',
+    shoulders: 'var(--yellow)', arms: '#a78bfa', core: '#fb923c'
+  };
+
+  const now = new Date();
+  const weeks = [];
+  for (let i = 7; i >= 0; i--) {
+    const weekStart = new Date(now);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1 - i * 7);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    const label = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    weeks.push({ start: weekStart, end: weekEnd, label, sets: Object.fromEntries(MUSCLES.map(m => [m, 0])) });
+  }
+
+  workouts.forEach(w => {
+    const date = new Date(w.date + 'T12:00:00');
+    const week = weeks.find(wk => date >= wk.start && date <= wk.end);
+    if (!week) return;
+    const exs = typeof w.exercises === 'string' ? JSON.parse(w.exercises) : (w.exercises || []);
+    exs.forEach(ex => {
+      const setCount = (ex.sets || []).length;
+      (ex.muscles || []).forEach(m => {
+        const key = m.toLowerCase();
+        if (week.sets[key] !== undefined) week.sets[key] += setCount;
+      });
+    });
+  });
+
+  let activeTab = MUSCLES[0];
+
+  function renderChart(muscle) {
+    const color = COLORS[muscle];
+    const vals = weeks.map(wk => wk.sets[muscle]);
+    const maxVal = Math.max(...vals, 1);
+    return `
+      <div class="mvt-chart">
+        ${weeks.map((wk, i) => {
+          const h = Math.max((vals[i] / maxVal) * 100, vals[i] > 0 ? 4 : 0);
+          return `
+            <div class="mvt-bar-col">
+              <div class="mvt-bar-wrap">
+                <div class="mvt-bar" style="height:${h}%;background:${color};" title="${wk.label}: ${vals[i]} sets"></div>
+              </div>
+              <div class="mvt-bar-label">${wk.label}</div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  function build() {
+    container.innerHTML = `
+      <div class="tabs" style="margin-bottom:16px;flex-wrap:wrap;">
+        ${MUSCLES.map(m => `
+          <button class="tab-btn${m === activeTab ? ' active' : ''}"
+            style="${m === activeTab ? `border-color:${COLORS[m]};color:${COLORS[m]};` : ''}"
+            onclick="(function(){window._mvtActiveTab='${m}';document.getElementById('muscleVolumeTrend')._rebuild();})()">
+            ${m.charAt(0).toUpperCase() + m.slice(1)}
+          </button>`).join('')}
+      </div>
+      ${renderChart(activeTab)}`;
+
+    container._rebuild = () => {
+      activeTab = window._mvtActiveTab || MUSCLES[0];
+      build();
+    };
+  }
+
+  build();
+}
+
+// =============================================
+// TOP LIFTS SPARKLINES — 6 most-logged exercises
+// =============================================
+function renderTopLiftsSparklines(workouts) {
+  const container = document.getElementById('topLiftsSparklines');
+  const exerciseData = {};
+
+  workouts.forEach(w => {
+    const exs = typeof w.exercises === 'string' ? JSON.parse(w.exercises) : (w.exercises || []);
+    exs.forEach(ex => {
+      if (!ex.name) return;
+      if (!exerciseData[ex.name]) exerciseData[ex.name] = { sessions: 0, history: [] };
+      let bestE1rm = 0;
+      (ex.sets || []).forEach(s => {
+        const weight = parseFloat(s.weight) || 0;
+        const reps = parseInt(s.reps) || 0;
+        if (weight > 0 && reps > 0) {
+          const e1rm = weight * (1 + reps / 30);
+          if (e1rm > bestE1rm) bestE1rm = e1rm;
+        }
+      });
+      if (bestE1rm > 0) {
+        exerciseData[ex.name].sessions++;
+        exerciseData[ex.name].history.push({ date: w.date, e1rm: bestE1rm });
+      }
+    });
+  });
+
+  const top6 = Object.entries(exerciseData)
+    .sort((a, b) => b[1].sessions - a[1].sessions)
+    .slice(0, 6);
+
+  if (!top6.length) {
+    container.innerHTML = '<div class="empty-state"><p>Log workouts to see your top lifts</p></div>';
+    return;
+  }
+
+  function sparkline(history) {
+    const last10 = history.slice(-10);
+    if (last10.length < 2) return `<svg width="100" height="36" viewBox="0 0 100 36"><line x1="0" y1="18" x2="100" y2="18" stroke="var(--accent)" stroke-width="1.5" stroke-opacity="0.4"/></svg>`;
+    const vals = last10.map(p => p.e1rm);
+    const minV = Math.min(...vals), maxV = Math.max(...vals);
+    const range = maxV - minV || 1;
+    const points = vals.map((v, i) => {
+      const x = (i / (vals.length - 1)) * 100;
+      const y = 4 + (1 - (v - minV) / range) * 28;
+      return `${x},${y}`;
+    }).join(' ');
+    return `<svg width="100" height="36" viewBox="0 0 100 36"><polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+
+  function trendArrow(history) {
+    const last = history.slice(-6);
+    if (last.length < 2) return '<span style="color:var(--text-muted);">→</span>';
+    const diff = ((last[last.length-1].e1rm - last[0].e1rm) / last[0].e1rm) * 100;
+    if (diff > 2) return '<span style="color:var(--green);">▲</span>';
+    if (diff < -2) return '<span style="color:var(--accent);">▼</span>';
+    return '<span style="color:var(--text-muted);">→</span>';
+  }
+
+  container.innerHTML = `
+    <div class="sparklines-grid">
+      ${top6.map(([name, data]) => {
+        const currentE1rm = Math.round(data.history[data.history.length - 1]?.e1rm || 0);
+        return `
+          <div class="sparkline-card">
+            <div class="sparkline-header">
+              <span class="sparkline-name">${name}</span>
+              ${trendArrow(data.history)}
+            </div>
+            <div class="sparkline-e1rm">
+              <span class="font-display" style="font-size:26px;font-weight:700;color:var(--accent);">${currentE1rm}</span>
+              <span style="font-size:11px;color:var(--text-muted);"> lbs e1RM</span>
+            </div>
+            <div>${sparkline(data.history)}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">${data.sessions} session${data.sessions !== 1 ? 's' : ''}</div>
+          </div>`;
+      }).join('')}
     </div>`;
 }

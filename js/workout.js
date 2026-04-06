@@ -19,6 +19,9 @@
   =============================================
 */
 
+// Active countdown timer reference (only one timer at a time)
+let activeTimer = null;
+
 // The key used to store the draft in localStorage.
 // Each user gets their own draft so multiple users
 // on the same device don't overwrite each other.
@@ -134,11 +137,22 @@ function addExerciseToWorkout(name, muscles) {
     id: Date.now(),
     name,
     muscles: muscles || [],
-    sets: [{ weight: '', reps: '' }]
+    sets: [{ weight: '', reps: '', type: 'WK' }]
   });
   renderExerciseList();
   saveDraft();  // Auto-save!
+  const exIdx = currentExercises.length - 1;
+  renderOverloadHint(exIdx, name);
 }
+
+// Set type labels and their display styles
+const SET_TYPES = [
+  { value: 'WK', label: 'WK',  title: 'Working set' },
+  { value: 'W',  label: 'W',   title: 'Warm-up' },
+  { value: 'D',  label: 'D',   title: 'Deload' },
+  { value: 'MR', label: 'MR',  title: 'Myo-rep' },
+  { value: 'DS', label: 'DS',  title: 'Drop set' },
+];
 
 // Draws all exercise entries with their set rows
 function renderExerciseList() {
@@ -146,31 +160,54 @@ function renderExerciseList() {
 
   if (!currentExercises.length) {
     container.innerHTML = '<div class="empty-state"><p>Add exercises to start building your workout</p></div>';
-    // Hide discard and bottom add buttons when nothing to discard
     const discardBtn = document.getElementById('discardWorkoutBtn');
     if (discardBtn) discardBtn.style.display = 'none';
     const bottomAdd = document.getElementById('bottomAddExercise');
     if (bottomAdd) bottomAdd.style.display = 'none';
+    if (typeof renderRecommendations === 'function') renderRecommendations();
     return;
   }
 
-  // Show discard and bottom add buttons when there's a workout in progress
   const discardBtn = document.getElementById('discardWorkoutBtn');
   if (discardBtn) discardBtn.style.display = 'inline-flex';
   const bottomAdd = document.getElementById('bottomAddExercise');
   if (bottomAdd) bottomAdd.style.display = 'block';
 
   container.innerHTML = currentExercises.map((ex, exIdx) => {
-    const setsHtml = ex.sets.map((s, setIdx) => `
-      <div class="set-row">
+    const setsHtml = ex.sets.map((s, setIdx) => {
+      const type = s.type || 'WK';
+      const isWarmup = type === 'W';
+      const isTimed = s.timed === true;
+
+      const typeOptions = SET_TYPES.map(t =>
+        `<option value="${t.value}" title="${t.title}" ${type === t.value ? 'selected' : ''}>${t.label}</option>`
+      ).join('');
+
+      const repsOrDuration = isTimed
+        ? `<input class="set-input" type="number" placeholder="sec" value="${s.duration || ''}"
+               onchange="updateSet(${exIdx},${setIdx},'duration',this.value)" min="1">`
+        : `<input class="set-input" type="number" placeholder="reps" value="${s.reps || ''}"
+               onchange="updateSet(${exIdx},${setIdx},'reps',this.value)">`;
+
+      const timerBtn = isTimed
+        ? `<button class="set-timer-btn active" title="Switch to reps" onclick="toggleTimedSet(${exIdx},${setIdx})">⏱</button>
+           <button class="set-start-btn" onclick="startTimer(${s.duration || 30},'${ex.name} set ${setIdx + 1}')">▶</button>`
+        : `<button class="set-timer-btn" title="Switch to timed" onclick="toggleTimedSet(${exIdx},${setIdx})">⏱</button>`;
+
+      return `
+      <div class="set-row${isWarmup ? ' set-row-warmup' : ''}">
+        <select class="set-type-select" onchange="updateSet(${exIdx},${setIdx},'type',this.value)" title="Set type">
+          ${typeOptions}
+        </select>
         <div class="set-num">${setIdx + 1}</div>
-        <input class="set-input" type="number" placeholder="lbs" value="${s.weight}"
+        <input class="set-input" type="number" placeholder="lbs" value="${s.weight || ''}"
                onchange="updateSet(${exIdx},${setIdx},'weight',this.value)">
-        <input class="set-input" type="number" placeholder="reps" value="${s.reps}"
-               onchange="updateSet(${exIdx},${setIdx},'reps',this.value)">
-        <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;"
+        ${repsOrDuration}
+        ${timerBtn}
+        <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 2px;"
                 onclick="removeSet(${exIdx},${setIdx})">×</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     return `<div class="exercise-entry">
       <div class="exercise-entry-header">
@@ -180,15 +217,77 @@ function renderExerciseList() {
           <button class="btn btn-danger btn-sm" onclick="removeExercise(${exIdx})">Remove</button>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:20px 1fr 1fr 20px;gap:4px;margin-bottom:6px;">
-        <div style="font-size:10px;color:var(--text-muted);text-align:center;">SET</div>
-        <div style="font-size:10px;color:var(--text-muted);text-align:center;">WEIGHT</div>
-        <div style="font-size:10px;color:var(--text-muted);text-align:center;">REPS</div>
-        <div></div>
+      <div class="set-row-header">
+        <div>TYPE</div><div>SET</div><div>WEIGHT</div><div>REPS</div><div></div><div></div>
       </div>
       ${setsHtml}
     </div>`;
   }).join('');
+
+  if (typeof renderRecommendations === 'function') renderRecommendations();
+}
+
+// Toggles timed mode for a set
+function toggleTimedSet(exIdx, setIdx) {
+  const s = currentExercises[exIdx].sets[setIdx];
+  s.timed = !s.timed;
+  if (s.timed) { s.duration = s.duration || 30; delete s.reps; }
+  else { s.reps = ''; delete s.timed; delete s.duration; }
+  renderExerciseList();
+  saveDraft();
+}
+
+// Starts a countdown timer overlay
+function startTimer(duration, label) {
+  if (activeTimer) { clearInterval(activeTimer); activeTimer = null; }
+
+  let overlay = document.getElementById('timerOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'timerOverlay';
+    document.body.appendChild(overlay);
+  }
+
+  let remaining = parseInt(duration) || 30;
+
+  function updateDisplay() {
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    overlay.innerHTML = `
+      <div id="timerInner">
+        <div id="timerLabel">${label || 'Timed Set'}</div>
+        <div id="timerCount">${m > 0 ? m + ':' + String(s).padStart(2,'0') : s}</div>
+        <div id="timerSub">seconds remaining</div>
+        <button id="timerCancelBtn" onclick="cancelTimer()">Cancel</button>
+      </div>`;
+  }
+
+  overlay.className = 'timer-overlay';
+  updateDisplay();
+
+  activeTimer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(activeTimer);
+      activeTimer = null;
+      overlay.className = 'timer-overlay timer-done';
+      overlay.innerHTML = `
+        <div id="timerInner">
+          <div id="timerCount">✓</div>
+          <div id="timerSub">Done!</div>
+        </div>`;
+      setTimeout(() => { overlay.remove(); }, 2500);
+      return;
+    }
+    updateDisplay();
+  }, 1000);
+}
+
+// Cancels the active timer
+function cancelTimer() {
+  if (activeTimer) { clearInterval(activeTimer); activeTimer = null; }
+  const overlay = document.getElementById('timerOverlay');
+  if (overlay) overlay.remove();
 }
 
 // Updates a single set's weight or reps value
@@ -199,7 +298,7 @@ function updateSet(exIdx, setIdx, field, value) {
 
 // Adds a new empty set row to an exercise
 function addSet(exIdx) {
-  currentExercises[exIdx].sets.push({ weight: '', reps: '' });
+  currentExercises[exIdx].sets.push({ weight: '', reps: '', type: 'WK' });
   renderExerciseList();
   saveDraft();
 }

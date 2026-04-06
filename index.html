@@ -48,8 +48,10 @@
             <li>Unlimited workout logging</li>
             <li>Workout history</li>
             <li>Exercise library</li>
-            <li>Body weight tracking</li>
-            <li>Water intake tracking</li>
+            <li>Set labeling (warm-up, deload, myo-rep…)</li>
+            <li>Timed sets with countdown timer</li>
+            <li>Rest timer &amp; plate calculator</li>
+            <li>Body weight &amp; water tracking</li>
             <li>Gym pass barcode</li>
           </ul>
         </div>
@@ -60,8 +62,13 @@
           <div class="plan-card-sub">cancel anytime</div>
           <ul class="plan-card-features">
             <li>Everything in Free</li>
-            <li class="feature-pro">Advanced analytics</li>
-            <li class="feature-pro">Calorie &amp; macro tracking</li>
+            <li class="feature-pro">Progressive overload coach</li>
+            <li class="feature-pro">Exercise recommendations</li>
+            <li class="feature-pro">Advanced analytics &amp; strength score</li>
+            <li class="feature-pro">Program builder &amp; periodization</li>
+            <li class="feature-pro">Friends leaderboard</li>
+            <li class="feature-pro">Body measurements tracking</li>
+            <li class="feature-pro">Full calorie &amp; macro diary</li>
             <li class="feature-pro">Edit past workouts</li>
             <li class="feature-pro">Custom exercises</li>
             <li class="feature-pro">Interactive muscle map</li>
@@ -228,10 +235,23 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L5 12c-1.5 2.5-.5 6 3 7.5s5.5 1 7 0 4.5-5 3-7.5L12 2z"/></svg>
         Water
       </button>
+      <div class="nav-section-label">Training</div>
+      <button class="nav-item" data-page="programs" onclick="showPage('programs')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/></svg>
+        Programs
+      </button>
       <div class="nav-section-label">Insights</div>
       <button class="nav-item" data-page="analytics" onclick="showPage('analytics')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.219-8.56"/><path d="M21 3v6h-6"/><line x1="3" y1="21" x2="21" y2="21"/><line x1="9" y1="21" x2="9" y2="14"/><line x1="13" y1="21" x2="13" y2="10"/><line x1="17" y1="21" x2="17" y2="16"/></svg>
         Analytics
+      </button>
+      <button class="nav-item" data-page="measurements" onclick="showPage('measurements')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 6H3"/><path d="M10 12H3"/><path d="M10 18H3"/><path d="M21 12l-4 4 4 4"/></svg>
+        Measurements
+      </button>
+      <button class="nav-item" data-page="friends" onclick="showPage('friends')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Leaderboard
       </button>
       <div class="nav-section-label">Account</div>
       <button class="nav-item" data-page="account" onclick="showPage('account')">
@@ -318,6 +338,7 @@
         <div id="bottomAddExercise" style="display:none;margin-top:12px;">
           <button class="btn btn-secondary w-full" onclick="openExercisePicker()" style="justify-content:center;">+ Add Another Exercise</button>
         </div>
+        <div id="recommendationsContainer"></div>
         <button class="btn btn-primary w-full mt-16" onclick="saveWorkout()" style="justify-content:center;padding:14px;">SAVE WORKOUT</button>
       </div>
     </div>
@@ -395,43 +416,78 @@
       </div>
     </div>
 
-    <!-- CALORIES -->
+    <!-- CALORIES / NUTRITION -->
     <div id="page-calories" class="page-container hidden">
-      <div class="page-header"><h2>Calorie Tracker</h2><p>Monitor your daily intake</p></div>
+      <div class="page-header"><h2>Nutrition</h2><p>Track calories &amp; macros</p></div>
       <div id="calories-content">
-      <div class="grid-2" style="align-items:start;">
-        <div class="card">
-          <div class="card-title mb-16">Today's Intake</div>
-          <div class="calorie-ring-container">
-            <div class="calorie-ring">
-              <svg viewBox="0 0 180 180">
-                <circle cx="90" cy="90" r="78" fill="none" stroke="var(--border)" stroke-width="10"/>
-                <circle id="calorieArc" cx="90" cy="90" r="78" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 490"/>
-              </svg>
-              <div class="calorie-ring-text">
-                <div class="calorie-ring-value" id="calorieTodayValue">0</div>
-                <div class="calorie-ring-label">of <span id="calorieGoalDisplay">2500</span></div>
+        <div class="grid-2" style="align-items:start;">
+          <!-- Left: Ring + Macros + Goals -->
+          <div>
+            <div class="card mb-16">
+              <div class="card-title mb-16">Today's Intake</div>
+              <div class="calorie-ring-container">
+                <div class="calorie-ring">
+                  <svg viewBox="0 0 180 180">
+                    <circle cx="90" cy="90" r="78" fill="none" stroke="var(--border)" stroke-width="10"/>
+                    <circle id="calorieArc" cx="90" cy="90" r="78" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 490"/>
+                  </svg>
+                  <div class="calorie-ring-text">
+                    <div class="calorie-ring-value" id="calorieTodayValue">0</div>
+                    <div class="calorie-ring-label">of <span id="calorieGoalDisplay">2500</span></div>
+                  </div>
+                </div>
+              </div>
+              <div id="macroBars" style="margin-top:16px;"></div>
+            </div>
+            <div class="card">
+              <div class="card-title mb-16">Daily Goals</div>
+              <div class="form-row">
+                <div class="form-group"><label>Calories</label><input type="number" id="calorieGoal" class="form-input" placeholder="2500" value="2500" onchange="saveCalorieGoal()"></div>
+                <div class="form-group"><label>Protein (g)</label><input type="number" id="goalProtein" class="form-input" placeholder="180" onchange="saveCalorieGoal()"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Carbs (g)</label><input type="number" id="goalCarbs" class="form-input" placeholder="250" onchange="saveCalorieGoal()"></div>
+                <div class="form-group"><label>Fat (g)</label><input type="number" id="goalFat" class="form-input" placeholder="70" onchange="saveCalorieGoal()"></div>
               </div>
             </div>
           </div>
-          <div class="form-group"><label>Daily Goal (kcal)</label><input type="number" id="calorieGoal" class="form-input" placeholder="2500" value="2500" onchange="saveCalorieGoal()"></div>
-        </div>
-        <div class="card">
-          <div class="card-title mb-16">Quick Add</div>
-          <div class="form-group"><label>Date</label><input type="date" id="calorieDate" class="form-input"></div>
-          <div class="form-group"><label>Food / Meal</label><input type="text" id="calorieFoodName" class="form-input" placeholder="e.g. Chicken breast, Rice"></div>
-          <div class="form-row">
-            <div class="form-group"><label>Calories</label><input type="number" id="calorieAmount" class="form-input" placeholder="500"></div>
-            <div class="form-group"><label>Protein (g)</label><input type="number" id="calorieProtein" class="form-input" placeholder="30"></div>
+          <!-- Right: Log entry + Quick add -->
+          <div>
+            <div class="card mb-16">
+              <div class="card-title mb-16">Log Food</div>
+              <div class="form-group"><label>Date</label><input type="date" id="calorieDate" class="form-input"></div>
+              <div class="form-group"><label>Food / Meal</label><input type="text" id="calorieFoodName" class="form-input" placeholder="e.g. Chicken breast, Rice"></div>
+              <div class="form-row">
+                <div class="form-group"><label>Calories</label><input type="number" id="calorieAmount" class="form-input" placeholder="500"></div>
+                <div class="form-group"><label>Protein (g)</label><input type="number" id="calorieProtein" class="form-input" placeholder="30"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Carbs (g)</label><input type="number" id="calorieCarbs" class="form-input" placeholder="50"></div>
+                <div class="form-group"><label>Fat (g)</label><input type="number" id="calorieFat" class="form-input" placeholder="10"></div>
+              </div>
+              <button class="btn btn-primary w-full" onclick="saveCalorieEntry()" style="justify-content:center;">Add Entry</button>
+            </div>
+            <div class="card">
+              <div class="card-title mb-16">Quick Add</div>
+              <div id="quickAddGrid" class="quick-add-grid"></div>
+            </div>
           </div>
-          <button class="btn btn-primary w-full" onclick="saveCalorieEntry()" style="justify-content:center;">Add Entry</button>
         </div>
-      </div>
-      <div class="card mt-16">
-        <div class="card-title mb-16">Today's Log</div>
-        <table class="data-table"><thead><tr><th>Food</th><th>Calories</th><th>Protein</th><th></th></tr></thead>
-        <tbody id="calorieLogTable"></tbody></table>
-      </div>
+        <!-- 7-Day Chart -->
+        <div class="card mt-16">
+          <div class="card-header"><span class="card-title">7-Day Overview</span></div>
+          <div id="calorie7DayChart" style="padding:8px 0;"></div>
+        </div>
+        <!-- Today's Log -->
+        <div class="card mt-16">
+          <div class="card-title mb-16">Today's Log</div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>Food</th><th>kcal</th><th style="color:#4a9eff;">Protein</th><th style="color:var(--yellow);">Carbs</th><th style="color:#fb923c;">Fat</th><th></th></tr></thead>
+              <tbody id="calorieLogTable"></tbody>
+            </table>
+          </div>
+        </div>
       </div><!-- end calories-content -->
     </div>
 
@@ -514,9 +570,85 @@
         </div>
 
         <!-- Water Stats -->
-        <div class="card">
+        <div class="card mb-16">
           <div class="card-header"><span class="card-title">💧 Hydration (30 Days)</span></div>
           <div id="waterAnalyticsChart"></div>
+        </div>
+
+        <!-- Strength Score -->
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">💪 Overall Strength Score</span></div>
+          <div id="strengthScoreSection"></div>
+        </div>
+
+        <!-- Muscle Volume Trend -->
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">📊 Per-Muscle Volume Trend</span></div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Sets per week — last 8 weeks</div>
+          <div id="muscleVolumeTrend"></div>
+        </div>
+
+        <!-- Top Lifts Sparklines -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">📈 Top Lifts</span></div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">e1RM trend over last 10 sessions</div>
+          <div id="topLiftsSparklines"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRAMS -->
+    <div id="page-programs" class="page-container hidden">
+      <div class="page-header"><h2>Programs</h2><p>Build structured training plans</p></div>
+      <div id="programs-content"></div>
+    </div>
+
+    <!-- FRIENDS & LEADERBOARD -->
+    <div id="page-friends" class="page-container hidden">
+      <div class="page-header"><h2>Leaderboard</h2><p>Compete with friends</p></div>
+      <div id="friends-content">
+        <div id="friends-tabs"></div>
+        <div id="friends-body"></div>
+      </div>
+    </div>
+
+    <!-- MEASUREMENTS -->
+    <div id="page-measurements" class="page-container hidden">
+      <div class="page-header"><h2>Measurements</h2><p>Track body composition over time</p></div>
+      <div id="measurements-content">
+        <div class="grid-2" style="align-items:start;">
+          <div class="card">
+            <div class="card-title mb-16">Log Measurements</div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="measDate" class="form-input">
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Body Fat %</label><input type="number" step="0.1" id="meas_body_fat_pct" class="form-input" placeholder="15.0"></div>
+              <div class="form-group"><label>Waist (cm)</label><input type="number" step="0.1" id="meas_waist_cm" class="form-input" placeholder="80.0"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Chest (cm)</label><input type="number" step="0.1" id="meas_chest_cm" class="form-input" placeholder="100.0"></div>
+              <div class="form-group"><label>Hips (cm)</label><input type="number" step="0.1" id="meas_hips_cm" class="form-input" placeholder="95.0"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Bicep (cm)</label><input type="number" step="0.1" id="meas_bicep_cm" class="form-input" placeholder="35.0"></div>
+              <div class="form-group"><label>Thigh (cm)</label><input type="number" step="0.1" id="meas_thigh_cm" class="form-input" placeholder="55.0"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Neck (cm)</label><input type="number" step="0.1" id="meas_neck_cm" class="form-input" placeholder="38.0"></div>
+            </div>
+            <div class="form-group"><label>Notes</label><input type="text" id="measNotes" class="form-input" placeholder="Optional notes"></div>
+            <button class="btn btn-primary w-full mt-16" onclick="saveMeasurement()" style="justify-content:center;">Save Measurements</button>
+          </div>
+          <div class="card">
+            <div class="card-title mb-16">Trends</div>
+            <div id="measCharts"><div class="empty-state"><p>Log 2+ entries to see trends</p></div></div>
+          </div>
+        </div>
+        <div class="card mt-16">
+          <div class="card-title mb-16">History</div>
+          <div id="measHistory" style="overflow-x:auto;"></div>
         </div>
       </div>
     </div>
@@ -691,6 +823,11 @@
 <script src="js/gympass.js"></script>
 <script src="js/account.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/overload.js"></script>
+<script src="js/recommendations.js"></script>
+<script src="js/friends.js"></script>
+<script src="js/programs.js"></script>
+<script src="js/measurements.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

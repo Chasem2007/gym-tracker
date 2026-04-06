@@ -24,12 +24,14 @@ function showUpgradePrompt(containerId, featureName) {
       <div class="upgrade-title">IRONLOG Pro</div>
       <div class="upgrade-desc">${featureName} is a Pro feature. Upgrade to unlock the full IRONLOG experience.</div>
       <div class="upgrade-features">
-        <div class="upgrade-feature-item">🏆 PR Board &amp; Strength Progress Charts</div>
-        <div class="upgrade-feature-item">🔥 Workout Heatmap &amp; Consistency Tracking</div>
-        <div class="upgrade-feature-item">🍎 Calorie &amp; Macro Tracking</div>
-        <div class="upgrade-feature-item">✏️ Edit &amp; Delete Past Workouts</div>
-        <div class="upgrade-feature-item">💪 Custom Exercise Creation</div>
-        <div class="upgrade-feature-item">🗺️ Interactive Muscle Map</div>
+        <div class="upgrade-feature-item">📈 Progressive Overload Coach</div>
+        <div class="upgrade-feature-item">💡 Workout Completion Recommendations</div>
+        <div class="upgrade-feature-item">🏆 Friends Leaderboard</div>
+        <div class="upgrade-feature-item">📊 Enhanced Analytics &amp; Strength Score</div>
+        <div class="upgrade-feature-item">📋 Program Builder &amp; Periodization</div>
+        <div class="upgrade-feature-item">📏 Body Measurements Tracking</div>
+        <div class="upgrade-feature-item">🍎 Full Calorie &amp; Macro Diary</div>
+        <div class="upgrade-feature-item">✏️ Edit Past Workouts &amp; Custom Exercises</div>
       </div>
       <button class="btn btn-primary upgrade-btn" onclick="startCheckout()">
         Upgrade to Pro — $6.99/mo

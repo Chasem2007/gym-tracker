@@ -39,6 +39,9 @@ function showPage(id) {
   if (id === 'analytics') loadAnalytics();
   if (id === 'gympass') loadGymPassData();
   if (id === 'account') loadAccountData();
+  if (id === 'friends') loadFriends();
+  if (id === 'programs') loadPrograms();
+  if (id === 'measurements') loadMeasurements();
 }
 
 function toggleSidebar() {
